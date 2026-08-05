@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment (uv)
+.venv/
+
+# Environment / secrets (committed: .env.example)
+.env
+
+# Uploads locais (storage de dev; não versionar)
+var/
+
