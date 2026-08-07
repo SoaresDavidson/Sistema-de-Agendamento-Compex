@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "horario-form.html",
+  "entry": "horario-form.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-08-06T19:22:51.094Z",
+  "updatedAt": "2026-08-06T19:22:51.094Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

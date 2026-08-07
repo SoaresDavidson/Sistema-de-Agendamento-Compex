@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "horarios.html",
+  "entry": "horarios.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-08-06T19:22:50.938Z",
+  "updatedAt": "2026-08-06T19:22:50.938Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

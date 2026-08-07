@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "novo-agendamento.html",
+  "entry": "novo-agendamento.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-08-06T19:21:27.862Z",
+  "updatedAt": "2026-08-06T19:21:27.862Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

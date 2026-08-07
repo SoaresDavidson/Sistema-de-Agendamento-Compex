@@ -1,0 +1,26 @@
+{
+  "kind": "critique-panel",
+  "score": 4.4,
+  "axes": {
+    "clarity": {
+      "score": 5,
+      "notes": "Fluxos e consequências das regras aparecem junto às decisões; disponibilidade e estados derivados são explicitados."
+    },
+    "hierarchy": {
+      "score": 4,
+      "notes": "A estrutura lateral, cabeçalho, filtros e conteúdo é consistente; telas densas preservam uma ação principal evidente."
+    },
+    "typography": {
+      "score": 4,
+      "notes": "Serif editorial apenas em títulos, corpo sistêmico e mono para datas e horários criam contraste funcional."
+    },
+    "motion": {
+      "score": 4,
+      "notes": "Movimento restrito a menu, toast e estados de interação, com suporte a preferência por redução de movimento."
+    },
+    "brand": {
+      "score": 5,
+      "notes": "Paleta neutra com verde-petróleo e âmbar evita estética hospitalar e mantém postura operacional calma."
+    }
+  }
+}
