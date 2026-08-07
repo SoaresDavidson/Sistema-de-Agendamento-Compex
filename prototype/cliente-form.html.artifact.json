@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "cliente-form.html",
+  "entry": "cliente-form.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-08-06T19:22:51.445Z",
+  "updatedAt": "2026-08-06T19:22:51.445Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

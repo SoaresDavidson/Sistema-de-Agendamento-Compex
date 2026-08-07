@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "agendamento-detalhes.html",
+  "entry": "agendamento-detalhes.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-08-06T19:21:27.694Z",
+  "updatedAt": "2026-08-06T19:21:27.694Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}
