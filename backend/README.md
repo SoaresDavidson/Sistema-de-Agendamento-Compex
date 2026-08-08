@@ -8,12 +8,8 @@ Este e o servico de backend da aplicacao Compex, construido com FastAPI, Postgre
 
 Certifique-se de ter as seguintes ferramentas instaladas em sua maquina:
 
-* Docker e Docker Compose
-* uv (Gerenciador de pacotes e ambientes Python)
-
-Instalacao do uv (caso nao tenha):
-* Linux/macOS: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-* Windows: `powershell -c "irm https://astral.sh/uv/install.sh | iex"`
+* Docker
+* Docker compose
 
 ---
 
@@ -32,45 +28,38 @@ Instalacao do uv (caso nao tenha):
 
 ---
 
-## 1. Subindo o Banco de Dados (PostgreSQL)
+## Como Rodar a Aplicação 
 
-Para iniciar o container do PostgreSQL:
+Para construir as imagens e iniciar todos os serviços (Banco de Dados PostgreSQL + API FastAPI):
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
+A aplicação estará disponível em **http://localhost:8000**.
+
+### Comandos Uteis do Docker Compose 
 
 * Verificar o status dos containers:
   ```bash
   docker compose ps
   ```
-* Ver logs do banco de dados:
+* Ver logs de toda a aplicação:
   ```bash
-  docker compose logs -f postgres
+  docker compose logs -f 
   ```
-* Parar o banco de dados:
+* Ver logs apenas da API 
+  ```bash
+  docker compose logs -f backend
+  ```
+* Ver logs apenas do banco de dados 
+  ```bash
+  docker compose logs -f postgres 
+  ```
+* Parar os containers :
   ```bash
   docker compose down
   ```
 
----
-
-## 2. Rodando o Backend (FastAPI)
-
-1. Instalar as dependencias e criar o ambiente virtual:
-   ```bash
-   uv sync
-   ```
-   (O uv ira criar a pasta `.venv` e instalar o Python e as bibliotecas automaticamente).
-
-2. Inicie o servidor de desenvolvimento:
-   ```bash
-   uv run uvicorn main:app --reload
-   ```
-
-O servidor estara rodando em: http://localhost:8000
-
----
 
 ## Documentacao da API
 
@@ -80,19 +69,4 @@ Com o servidor rodando, voce pode acessar a documentacao interativa:
 * ReDoc: http://localhost:8000/redoc
 * pgAdmin (Gerenciador Visual do Banco): http://localhost:5050
 
----
 
-## Comandos Uteis do uv
-
-* Adicionar uma nova biblioteca:
-  ```bash
-  uv add nome-da-biblioteca
-  ```
-* Remover uma biblioteca:
-  ```bash
-  uv remove nome-da-biblioteca
-  ```
-* Executar comandos no ambiente virtual:
-  ```bash
-  uv run <comando>
-  ```
