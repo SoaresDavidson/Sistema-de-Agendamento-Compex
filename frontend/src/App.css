@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: oklch(97.8% 0.006 210);
+  --color-foreground: oklch(23% 0.025 220);
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(23% 0.025 220);
+  --color-muted: oklch(94% 0.009 215);
+  --color-muted-foreground: oklch(50% 0.025 220);
+  --color-border: oklch(89% 0.012 215);
+  --color-primary: oklch(48% 0.085 185);
+  --color-primary-foreground: oklch(100% 0 0);
+  --color-secondary: oklch(67% 0.1 78);
+  --color-success: oklch(52% 0.11 155);
+  --color-warning: oklch(64% 0.12 75);
+  --color-destructive: oklch(52% 0.15 28);
+  --color-info: oklch(52% 0.1 235);
+
+  --font-heading: "Iowan Old Style", Charter, Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --radius-control: 0.625rem;
+  --radius-card: 1rem;
+  --radius-modal: 1.125rem;
+  --shadow-modal: 0 1rem 2.625rem oklch(23% 0.025 220 / 9%);
+
+  --spacing-sidebar: 15.5rem;
+  --container-content: 90rem;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+}
