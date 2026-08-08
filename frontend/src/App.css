@@ -14,6 +14,7 @@
   --color-success: oklch(52% 0.11 155);
   --color-warning: oklch(64% 0.12 75);
   --color-destructive: oklch(52% 0.15 28);
+  --color-feedback-error-bg: oklch(95% 0.035 28);
   --color-info: oklch(52% 0.1 235);
 
   --font-heading: "Iowan Old Style", Charter, Georgia, serif;
