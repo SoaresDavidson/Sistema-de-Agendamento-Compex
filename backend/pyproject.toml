@@ -9,3 +9,13 @@ dependencies = [
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.52.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+pythonpath = ["."]
+testpaths = ["tests"]
