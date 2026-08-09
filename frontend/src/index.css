@@ -74,23 +74,17 @@ h2 {
 }
 
 h1 {
-	font-size: 56px;
-	letter-spacing: -1.68px;
-	margin: 32px 0;
-	@media (max-width: 1024px) {
-		font-size: 36px;
-		margin: 20px 0;
-	}
+	font-size: 36px;
+	margin: 20px 0;
 }
+
 h2 {
-	font-size: 24px;
+	font-size: 20px;
 	line-height: 118%;
 	letter-spacing: -0.24px;
 	margin: 0 0 8px;
-	@media (max-width: 1024px) {
-		font-size: 20px;
-	}
 }
+
 p {
 	margin: 0;
 }
@@ -108,4 +102,205 @@ code {
 	line-height: 135%;
 	padding: 4px 8px;
 	background: var(--code-bg);
+}
+
+/* Design system do protótipo — componentes usados pela listagem de agendamentos */
+.btn {
+	min-height: 42px;
+	border-radius: 9px;
+	border: 1px solid transparent;
+	padding: 9px 15px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	font-weight: 650;
+	font-size: 14px;
+	transition:
+		background 140ms cubic-bezier(0.23, 1, 0.32, 1),
+		transform 100ms ease,
+		border-color 140ms;
+	cursor: pointer;
+	text-align: left;
+}
+
+.btn:active {
+	transform: translateY(1px);
+}
+
+.btn-primary {
+	background: var(--accent);
+	color: #fff;
+}
+
+.btn-primary:hover {
+	background: color-mix(in srgb, var(--accent) 86%, black);
+}
+
+.btn-secondary {
+	background: var(--bg);
+	border-color: var(--border);
+	color: var(--text-h);
+}
+
+.btn-secondary:hover {
+	border-color: var(--text);
+}
+
+.btn-ghost {
+	background: transparent;
+	color: var(--text);
+	padding-inline: 8px;
+}
+
+.btn-ghost:hover {
+	color: var(--text-h);
+	background: var(--bg);
+}
+
+.btn-sm {
+	min-height: 34px;
+	padding: 6px 10px;
+	font-size: 13px;
+}
+
+.btn[disabled] {
+	opacity: 0.48;
+	cursor: not-allowed;
+}
+
+.page-btn {
+	width: 36px;
+	height: 36px;
+	border: 1px solid var(--border);
+	background: var(--bg);
+	border-radius: 8px;
+	color: var(--text);
+	cursor: pointer;
+	font-size: 14px;
+}
+
+.page-btn.active {
+	background: var(--text-h);
+	color: var(--bg);
+	border-color: var(--text-h);
+}
+
+.page-btn[disabled] {
+	opacity: 0.48;
+	cursor: not-allowed;
+}
+
+.table-wrap {
+	overflow: auto;
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 840px;
+	font-size: 14px;
+}
+
+.table th,
+.table td {
+	padding: 14px 16px;
+	text-align: left;
+	border-bottom: 1px solid var(--border);
+	vertical-align: middle;
+}
+
+.table th {
+	position: sticky;
+	top: 0;
+	background: var(--bg);
+	z-index: 1;
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.045em;
+	text-transform: uppercase;
+	color: var(--text);
+	font-weight: 650;
+}
+
+.table tr:last-child td {
+	border-bottom: 0;
+}
+
+.table tbody tr:hover {
+	background: color-mix(in srgb, var(--text-h) 3.5%, var(--bg));
+}
+
+.table-actions {
+	display: flex;
+	gap: 4px;
+	justify-content: flex-end;
+}
+
+.table .mono {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+
+.primary-cell {
+	font-weight: 650;
+	color: var(--text-h);
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 5px 9px;
+	border-radius: 999px;
+	font-family: var(--mono);
+	font-size: 11px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.status::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.status-agendado {
+	color: var(--accent);
+	background: var(--accent-bg);
+}
+
+.status-cancelado {
+	color: #d12f2f;
+	background: color-mix(in srgb, #d12f2f 10%, transparent);
+}
+
+.status-concluido {
+	color: var(--text);
+	background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.pagination {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-top: 16px;
+	color: var(--text);
+	font-size: 13px;
+}
+
+.pages {
+	display: flex;
+	gap: 6px;
+}
+
+.breadcrumb {
+	color: var(--text);
+	font-size: 13px;
 }
