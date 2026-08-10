@@ -11,13 +11,13 @@ Os testes de horários disponíveis nesta etapa são unitários e verificam:
 
 ## Limitações temporárias
 
-Os testes ainda não cobrem a persistência integrada no PostgreSQL. Essa cobertura
-depende de duas entregas externas à issue #33:
+Os testes ainda não cobrem a persistência integrada no PostgreSQL. A camada de
+banco e o Alembic já estão configurados pela issue #9, mas essa cobertura ainda
+depende de:
 
-- a configuração do Alembic e da camada de abstração do banco, prevista na issue
-  #9;
 - a implementação da tabela e do modelo de médico, necessários para validar a
-  chave estrangeira `horarios.medico_id`.
+  chave estrangeira `horarios.medico_id`;
+- a criação da migration de `horarios` após a integração do médico.
 
-Após essas integrações, ainda será necessário criar e testar a migration de
-`horarios` e comprovar a criação e a consulta de registros no PostgreSQL.
+Após essa integração, será necessário testar a migration e comprovar a criação e
+a consulta de registros no PostgreSQL.

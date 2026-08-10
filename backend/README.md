@@ -60,6 +60,34 @@ A aplicação estará disponível em **http://localhost:8000**.
   docker compose down
   ```
 
+## Migracoes do banco de dados
+
+O Alembic utiliza a mesma `DATABASE_URL`, o mesmo `engine` e os mesmos modelos
+SQLAlchemy da aplicacao.
+
+Com os containers em execucao, aplique todas as migrations pendentes:
+
+```bash
+docker compose exec backend uv run alembic upgrade head
+```
+
+Para criar uma migration a partir das alteracoes nos modelos:
+
+```bash
+docker compose exec backend uv run alembic revision --autogenerate -m "descricao da alteracao"
+```
+
+Outros comandos uteis:
+
+```bash
+docker compose exec backend uv run alembic current
+docker compose exec backend uv run alembic history
+docker compose exec backend uv run alembic downgrade -1
+```
+
+As migrations geradas ficam em `alembic/versions` e devem ser revisadas antes
+de serem adicionadas ao Git.
+
 
 ## Documentacao da API
 
@@ -68,5 +96,4 @@ Com o servidor rodando, voce pode acessar a documentacao interativa:
 * Swagger UI: http://localhost:8000/docs
 * ReDoc: http://localhost:8000/redoc
 * pgAdmin (Gerenciador Visual do Banco): http://localhost:5050
-
 
