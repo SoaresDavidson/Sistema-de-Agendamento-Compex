@@ -1,3 +1,8 @@
-from app.schemas.horario import HorarioCreate, HorarioResponse
+from app.schemas.horario import (
+    DiaSemana,
+    HorarioCreate,
+    HorarioLoteCreate,
+    HorarioResponse,
+)
 
-__all__ = ["HorarioCreate", "HorarioResponse"]
+__all__ = ["DiaSemana", "HorarioCreate", "HorarioLoteCreate", "HorarioResponse"]
