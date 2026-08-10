@@ -5,6 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.16.4",
     "fastapi>=0.141.1",
+    "psycopg[binary]>=3.2.9",
+    "sqlalchemy>=2.0.43",
     "uvicorn>=0.52.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+markers = [
+    "integration: testes que utilizam infraestrutura externa",
+]
+pythonpath = ["."]
+testpaths = ["tests"]
