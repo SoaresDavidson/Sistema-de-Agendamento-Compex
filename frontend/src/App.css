@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* stylelint-disable at-rule-no-unknown */
 @theme {
 	--color-background: oklch(97.8% 0.006 210);
 	--color-foreground: oklch(23% 0.025 220);
@@ -45,5 +46,13 @@
 		font-family: var(--font-heading);
 		letter-spacing: -0.015em;
 		text-wrap: balance;
+	}
+}
+
+@layer components {
+	.app-shell {
+		min-height: 100vh;
+		display: grid;
+		grid-template-columns: var(--spacing-sidebar) minmax(0, 1fr);
 	}
 }
