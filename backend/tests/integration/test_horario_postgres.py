@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import Column, Table, Uuid, create_engine, insert
 from sqlalchemy.orm import Session
 
-from app.models import Base, Horario
+from app.models import Base
 from app.repositories.horario import (
     buscar_horario_por_id,
     criar_horario,

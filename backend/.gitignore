@@ -12,3 +12,4 @@ __pycache__/
 # Uploads locais (storage de dev; não versionar)
 var/
 
+.ruff_cache/

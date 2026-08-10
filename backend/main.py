@@ -11,9 +11,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def read_root():
     return {"message": "API Compex rodando com sucesso no Docker!"}
+
 
 @app.get("/api/health")
 def health_check():

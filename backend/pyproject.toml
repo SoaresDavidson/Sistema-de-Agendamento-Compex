@@ -15,7 +15,13 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "ruff>=0.16.2",
 ]
+
+[tool.ruff]
+line-length = 88
+[tool.ruff.format]
+skip-magic-trailing-comma = false
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
