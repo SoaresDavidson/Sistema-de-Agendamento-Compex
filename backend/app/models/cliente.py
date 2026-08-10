@@ -38,6 +38,6 @@ class Client(Base):
     )
 
     data_nascimento: Mapped[Date] = mapped_column(
-        DateTime(timezone=True),
+        Date(timezone=True),
         nullable=False,
     )
