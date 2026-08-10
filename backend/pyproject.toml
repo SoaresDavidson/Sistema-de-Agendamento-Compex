@@ -19,5 +19,8 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
+markers = [
+    "integration: testes que utilizam infraestrutura externa",
+]
 pythonpath = ["."]
 testpaths = ["tests"]

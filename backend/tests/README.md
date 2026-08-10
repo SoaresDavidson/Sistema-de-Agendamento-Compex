@@ -9,15 +9,19 @@ Os testes de horários disponíveis nesta etapa são unitários e verificam:
 - a criação e as consultas realizadas pelo repository;
 - a ausência de `commit` dentro do repository.
 
+Há também um teste de integração que comprova a criação e a consulta de um
+horário no PostgreSQL. Como o modelo definitivo de médico ainda não existe, esse
+teste cria uma tabela mínima de `medicos` dentro de uma transação e desfaz toda a
+estrutura ao terminar.
+
 ## Limitações temporárias
 
-Os testes ainda não cobrem a persistência integrada no PostgreSQL. A camada de
-banco e o Alembic já estão configurados pela issue #9, mas essa cobertura ainda
-depende de:
+O teste de integração não substitui a validação da estrutura definitiva. Ainda
+dependem da implementação do modelo de médico:
 
-- a implementação da tabela e do modelo de médico, necessários para validar a
-  chave estrangeira `horarios.medico_id`;
-- a criação da migration de `horarios` após a integração do médico.
+- a criação da migration de `horarios` após a integração do médico;
+- a execução dessa migration com a chave estrangeira real;
+- a validação do relacionamento ORM entre médico e horário.
 
-Após essa integração, será necessário testar a migration e comprovar a criação e
-a consulta de registros no PostgreSQL.
+O teste é ignorado automaticamente quando `DATABASE_URL` não está configurada,
+permitindo executar os testes unitários sem infraestrutura externa.
