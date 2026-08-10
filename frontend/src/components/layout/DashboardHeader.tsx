@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+
 function getCurrentDate(date = new Date()) {
 	const parts = new Intl.DateTimeFormat("pt-BR", {
 		weekday: "long",
@@ -12,12 +14,19 @@ function getCurrentDate(date = new Date()) {
 	return `${getPart("weekday")} - ${getPart("day")} ${getPart("month")} ${getPart("year")}`;
 }
 
+const routeTitles: Record<string, string> = {
+  "/agendamentos": "Agendamentos",
+  "/clientes": "Clientes",
+};
+
 export function DashboardHeader() {
+	const { pathname } = useLocation();
+  	const pageTitle = routeTitles[pathname] ?? "Visão geral";
 	return (
 		<header className="sticky top-0 flex h-18 items-center justify-between border-b border-border px-8">
 			<p className="font-sans text-sm text-muted-foreground">
 				Clínica Aurora /{" "}
-				<strong className="font-semibold text-foreground">Agendamentos</strong>
+				<strong className="font-semibold text-foreground">{pageTitle}</strong>
 			</p>
 			<p className="font-mono text-xs uppercase text-muted-foreground">
 				{getCurrentDate()}
