@@ -4,8 +4,11 @@ import { AgendamentosNavLink } from "@/features/agendamentos/components/Agendame
 export function DashboardSidebar() {
 	return (
 		<aside className="sticky flex h-screen flex-col border-r border-border bg-card p-4 font-sans">
-			<div className="top-0 px-2 py-5 font-heading text-xl font-bold">
-				Clínica Aurora
+			<div className="flex items-center gap-3 px-2 py-5 font-heading text-xl font-bold">
+				<div className="grid size-9 place-items-center rounded-control border border-primary font-mono text-xs text-primary">
+					CA
+				</div>
+				<span>Clínica Aurora</span>
 			</div>
 			<nav className="mt-4 grid gap-1">
 				<AgendamentosNavLink />
