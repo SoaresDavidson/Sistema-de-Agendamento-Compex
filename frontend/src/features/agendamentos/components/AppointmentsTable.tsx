@@ -13,6 +13,7 @@ import { StatusBadge } from "./StatusBadge";
 
 interface AppointmentsTableProps {
 	appointments: Appointment[];
+	onCancelar?: (a: Appointment) => void;
 }
 
 const COLUMNS = [
@@ -25,7 +26,10 @@ const COLUMNS = [
 	"Ações",
 ] as const;
 
-export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
+export function AppointmentsTable({
+	appointments,
+	onCancelar,
+}: AppointmentsTableProps) {
 	return (
 		<TableWrap>
 			<Table>
@@ -60,7 +64,12 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
 										Detalhes
 									</Button>
 									{a.status === "AGENDADO" && (
-										<Button variant="ghost" size="sm" data-action="cancelar">
+										<Button
+											variant="ghost"
+											size="sm"
+											data-action="cancelar"
+											onClick={() => onCancelar?.(a)}
+										>
 											Cancelar
 										</Button>
 									)}

@@ -72,7 +72,17 @@ const MOCK_APPOINTMENTS: Appointment[] = [
 		especialidade: "Endocrinologia",
 		data: "13/08/2026",
 		horario: "16:00–17:00",
-		status: "CANCELADO",
+		status: "AGENDADO",
+	},
+	{
+    //Felipe: repetindo um agendamento para mais tarde me lembrar de fazer isso quando o backend estiver pronto
+		id: "a9",
+		cliente: "Felipe Soares",
+		medico: "Dra. Lúcia Fernandes",
+		especialidade: "Endocrinologia",
+		data: "13/08/2026",
+		horario: "16:00–17:00",
+		status: "AGENDADO",
 	},
 ];
 
