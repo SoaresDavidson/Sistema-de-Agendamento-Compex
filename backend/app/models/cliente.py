@@ -16,9 +16,11 @@ from app.models.base import Base
 
 class Client(Base):
     __tablename__ = "clientes"
-    __table_args__ = CheckConstraint(
-        "data_nascimento <= CURRENT_TIMESTAMP",
-        name="ck_cliente_data_nascimento_nao_futura",
+    __table_args__ = (
+        CheckConstraint(
+            "data_nascimento <= CURRENT_TIMESTAMP",
+            name="ck_cliente_data_nascimento_nao_futura",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
