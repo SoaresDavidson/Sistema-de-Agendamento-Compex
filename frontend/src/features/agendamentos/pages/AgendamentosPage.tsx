@@ -1,13 +1,28 @@
+import { useState } from "react";
 import { ErrorState } from "@/components/ui/Error";
 import { Skeleton } from "@/components/ui/Skeleton";
+import type { Appointment, CancelamentoPayload } from "../api/types";
 import { AppointmentsPagination } from "../components/AppointmentsPagination";
 import { AppointmentsTable } from "../components/AppointmentsTable";
+import { CancelamentoModal } from "../components/CancelamentoModal";
 import { useAppointments } from "../hooks/useAppointments";
 
 const SKELETON_IDS = ["1", "2", "3", "4", "5"] as const;
 
 export function AgendamentosPage() {
 	const { data, loading, error, page, setPage } = useAppointments(1);
+	const [alvoCancelamento, setAlvoCancelamento] = useState<Appointment | null>(
+		null,
+	);
+
+	const handleConfirmarCancelamento = (payload: CancelamentoPayload) => {
+		if (alvoCancelamento === null) return;
+		console.debug("[agendamentos] cancelamento stub:", {
+			id: alvoCancelamento.id,
+			...payload,
+		});
+		setAlvoCancelamento(null);
+	};
 
 	return (
 		<section>
@@ -45,7 +60,10 @@ export function AgendamentosPage() {
 
 				{!loading && !error && data && data.items.length > 0 && (
 					<>
-						<AppointmentsTable appointments={data.items} />
+						<AppointmentsTable
+							appointments={data.items}
+							onCancelar={setAlvoCancelamento}
+						/>
 						<AppointmentsPagination
 							page={data.page}
 							totalPages={data.totalPages}
@@ -62,6 +80,13 @@ export function AgendamentosPage() {
 					</div>
 				)}
 			</div>
+
+			<CancelamentoModal
+				open={alvoCancelamento !== null}
+				agendamento={alvoCancelamento}
+				onConfirm={handleConfirmarCancelamento}
+				onClose={() => setAlvoCancelamento(null)}
+			/>
 		</section>
 	);
 }
