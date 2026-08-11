@@ -24,3 +24,10 @@ export interface ListAppointmentsParams {
 }
 
 export const APPOINTMENTS_PAGE_SIZE = 5;
+
+export type CancelamentoOrigem = "CLIENTE" | "MEDICO";
+
+export interface CancelamentoPayload {
+	origem: CancelamentoOrigem;
+	observacao?: string;
+}
