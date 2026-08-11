@@ -38,28 +38,21 @@ def buscar_possivel_duplicidade(
 
 def listar_clientes(
     session: Session,
-    cursor_id: uuid.UUID | None = None, 
-    limit: int = _DEFAULT_LIMIT
-) -> tuple[Sequence[Client], uuid.UUID]:
-    statement = select(Client).order_by(Client.Client.id)
+    cursor_id: uuid.UUID | None = None,
+    limit: int = _DEFAULT_LIMIT,
+) -> tuple[Sequence[Client], uuid.UUID | None]:
+    limit = max(1, min(limit, _MAX_LIMIT))
+    statement = select(Client).order_by(Client.id)
 
     if cursor_id is not None:
         statement = statement.where(Client.id > cursor_id)
 
-    clientes = list(
-        session.scalars(
-            statement.limit(limit + 1)
-        ).all()
-    )
+    clientes = list(session.scalars(statement.limit(limit + 1)).all())
 
     possui_proxima_pagina = len(clientes) > limit
     clientes = clientes[:limit]
 
-    proximo_id = (
-        clientes[-1].id
-        if possui_proxima_pagina
-        else None
-    )
+    proximo_id = clientes[-1].id if possui_proxima_pagina else None
 
     return clientes, proximo_id
 

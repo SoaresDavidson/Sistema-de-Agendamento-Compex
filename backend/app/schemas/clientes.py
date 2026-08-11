@@ -1,8 +1,14 @@
 import uuid
+from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, StringConstraints
-from sqlalchemy import Date
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    StringConstraints,
+    field_validator,
+)
 
 Nome = Annotated[
     str,
@@ -17,8 +23,15 @@ Nome = Annotated[
 class ClienteBase(BaseModel):
     nome: Nome
     telefone: str
-    email: EmailStr | None
-    data_nascimento: Date
+    email: EmailStr | None = None
+    data_nascimento: date
+
+    @field_validator("data_nascimento")
+    @classmethod
+    def validar_data_nascimento(cls, valor: date) -> date:
+        if valor > datetime.datetime.now(tz=...).date():
+            raise ValueError("data de nascimento não pode ser futura")
+        return valor
 
 
 class ClienteCreate(ClienteBase):

@@ -1,7 +1,7 @@
 import os
-from dotenv import load_dotenv
-
 from collections.abc import Generator
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
