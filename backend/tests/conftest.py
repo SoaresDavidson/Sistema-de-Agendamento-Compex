@@ -3,10 +3,16 @@ import uuid
 from collections.abc import Generator
 
 import pytest
+from dotenv import load_dotenv
 from sqlalchemy import Column, Table, Uuid, create_engine, insert
 from sqlalchemy.orm import Session
 
 from app.models import Base
+
+# Carrega variáveis de backend/.env para o processo do pytest, espelhando
+# o comportamento de app/database.py. Habilita rodar `uv run pytest` sem
+# precisar prefixar DATABASE_URL=... no shell.
+load_dotenv()
 
 # Marcador reusado por testes que precisam de PostgreSQL.
 pytestmark_integration = pytest.mark.integration
