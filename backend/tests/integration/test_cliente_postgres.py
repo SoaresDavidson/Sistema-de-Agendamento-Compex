@@ -4,7 +4,7 @@ from collections.abc import Generator
 from datetime import date, timedelta
 
 import pytest
-from sqlalchemy import create_engine, inspect, insert, func, select
+from sqlalchemy import create_engine, func, insert, inspect, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -34,9 +34,7 @@ def banco_postgres_clientes() -> Generator[Session]:
 
         try:
             connection.exec_driver_sql(f'CREATE SCHEMA "{schema}"')
-            connection.exec_driver_sql(
-                f'SET LOCAL search_path TO "{schema}"'
-            )
+            connection.exec_driver_sql(f'SET LOCAL search_path TO "{schema}"')
             Client.__table__.create(connection)
 
             with Session(
@@ -119,13 +117,10 @@ def test_banco_rejeita_campo_obrigatorio_ausente(
         banco_postgres_clientes.execute(insert(Client).values(**valores))
 
 
-
 def test_banco_rejeita_data_nascimento_futura(
     banco_postgres_clientes: Session,
 ) -> None:
-    hoje_banco = banco_postgres_clientes.scalar(
-    select(func.current_date())
-    )
+    hoje_banco = banco_postgres_clientes.scalar(select(func.current_date()))
     assert hoje_banco is not None
 
     data_futura = hoje_banco + timedelta(days=1)
@@ -143,9 +138,7 @@ def test_banco_rejeita_data_nascimento_futura(
 def test_banco_possui_indice_nao_unico_para_duplicidade(
     banco_postgres_clientes: Session,
 ) -> None:
-    indices = inspect(banco_postgres_clientes.connection()).get_indexes(
-        "clientes"
-    )
+    indices = inspect(banco_postgres_clientes.connection()).get_indexes("clientes")
     indice = next(
         indice
         for indice in indices

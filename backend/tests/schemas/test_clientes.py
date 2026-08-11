@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -76,7 +76,9 @@ def test_rejeita_campo_obrigatorio_ausente(campo: str) -> None:
 
 def test_rejeita_data_nascimento_futura() -> None:
     payload = payload_valido()
-    payload["data_nascimento"] = date.today() + timedelta(days=1)
+    payload["data_nascimento"] = datetime.datetime.now(tz=...).date() + timedelta(
+        days=1
+    )
 
     with pytest.raises(
         ValidationError,
@@ -96,9 +98,7 @@ def test_cliente_response_le_atributos_do_model() -> None:
 
 
 def test_cliente_page_aceita_itens_e_cursor() -> None:
-    cliente = ClienteResponse.model_validate(
-        {"id": uuid.uuid4(), **payload_valido()}
-    )
+    cliente = ClienteResponse.model_validate({"id": uuid.uuid4(), **payload_valido()})
 
     pagina = ClientePage(items=[cliente], next_cursor="cursor-seguinte")
 
