@@ -25,3 +25,10 @@ dependem da implementação do modelo de médico:
 
 O teste é ignorado automaticamente quando `DATABASE_URL` não está configurada,
 permitindo executar os testes unitários sem infraestrutura externa.
+
+## Testes da API
+
+Os testes das rotas utilizam o `TestClient` do FastAPI para verificar os
+contratos HTTP de sucesso, validação e conflitos. A biblioteca `httpx2`, exigida
+por esse cliente de teste, está no grupo de dependências de desenvolvimento e
+não é uma dependência de execução da API.
