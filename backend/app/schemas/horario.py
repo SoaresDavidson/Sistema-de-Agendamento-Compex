@@ -40,3 +40,8 @@ class HorarioResponse(HorarioBase):
 
     id: uuid.UUID
     ativo: bool
+
+
+class HorariosLoteResponse(BaseModel):
+    horarios: list[HorarioResponse]
+    total_criados: int
