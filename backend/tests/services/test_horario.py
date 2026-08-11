@@ -150,7 +150,7 @@ def test_lote_rejeita_horarios_no_passado_antes_de_persistir() -> None:
         cadastrar_horarios_em_lote(
             MagicMock(spec=Session),
             criar_lote(),
-            agora=datetime(2030, 1, 8),
+            agora=datetime.combine(date(2030, 1, 8), time()),
         )
 
 
@@ -159,8 +159,8 @@ def test_lote_informa_conflito_existente_sem_persistir(
 ) -> None:
     conflito = Horario(
         medico_id=uuid.uuid4(),
-        inicio=datetime(2030, 1, 7, 8),
-        fim=datetime(2030, 1, 7, 9),
+        inicio=datetime.combine(date(2030, 1, 7), time(8)),
+        fim=datetime.combine(date(2030, 1, 7), time(9)),
     )
     criar_horario = MagicMock()
     monkeypatch.setattr(
@@ -174,7 +174,7 @@ def test_lote_informa_conflito_existente_sem_persistir(
         cadastrar_horarios_em_lote(
             MagicMock(spec=Session),
             criar_lote(),
-            agora=datetime(2030, 1, 1),
+            agora=datetime.combine(date(2030, 1, 1), time()),
         )
 
     assert erro.value.conflitos_existentes == (conflito,)
@@ -193,7 +193,7 @@ def test_lote_persiste_todos_os_blocos_apos_validacao(
     resultado = cadastrar_horarios_em_lote(
         MagicMock(spec=Session),
         criar_lote(),
-        agora=datetime(2030, 1, 1),
+        agora=datetime.combine(date(2030, 1, 1), time()),
     )
 
     assert resultado == horarios_criados
@@ -202,7 +202,7 @@ def test_lote_persiste_todos_os_blocos_apos_validacao(
 
 def test_conflitos_no_lote_sao_restritos_ao_mesmo_medico() -> None:
     medico_id = uuid.uuid4()
-    inicio = datetime(2030, 1, 7, 8)
+    inicio = datetime.combine(date(2030, 1, 7), time(8))
     horarios = [
         criar_horario_create(inicio, medico_id),
         criar_horario_create(inicio + timedelta(minutes=30), medico_id),

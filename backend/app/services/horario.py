@@ -173,4 +173,3 @@ def _buscar_conflitos_existentes(
         conflitos.update({conflito.id: conflito for conflito in encontrados})
 
     return list(conflitos.values())
-
