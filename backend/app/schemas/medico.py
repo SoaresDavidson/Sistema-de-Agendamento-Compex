@@ -3,6 +3,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
+from app.schemas.especialidade import EspecialidadeResponse
+
 NomeMedico = Annotated[
     str,
     StringConstraints(
@@ -19,13 +21,6 @@ class MedicoBase(BaseModel):
 
 class MedicoCreate(MedicoBase):
     especialidade_id: uuid.UUID
-
-
-class EspecialidadeResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    nome: str
 
 
 class MedicoResponse(MedicoBase):
