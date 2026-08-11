@@ -7,4 +7,4 @@ from app.models.base import TimestampedBase
 class Especialidade(TimestampedBase):
     __tablename__ = "especialidades"
 
-    nome: Mapped[str] = mapped_column(String(255), nullable=False)
+    nome: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
