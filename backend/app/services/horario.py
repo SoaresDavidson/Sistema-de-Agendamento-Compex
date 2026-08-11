@@ -5,7 +5,11 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.horario import Horario
-from app.repositories.horario import buscar_horarios_sobrepostos, criar_horario
+from app.repositories.horario import (
+    buscar_horario_por_id,
+    buscar_horarios_sobrepostos,
+    criar_horario,
+)
 from app.schemas.horario import DiaSemana, HorarioCreate, HorarioLoteCreate
 
 
@@ -34,6 +38,14 @@ class HorariosLoteConflitantesError(Exception):
         self.conflitos_existentes = tuple(conflitos_existentes)
         self.conflitos_no_lote = tuple(conflitos_no_lote)
         super().__init__("Existem conflitos nos horários gerados para o lote")
+
+
+class HorarioNaoEncontradoError(LookupError):
+    """Indica que o horário informado não existe."""
+
+
+class HorarioJaInativoError(Exception):
+    """Indica que o horário já está inativo."""
 
 
 def cadastrar_horario_individual(
@@ -173,3 +185,14 @@ def _buscar_conflitos_existentes(
         conflitos.update({conflito.id: conflito for conflito in encontrados})
 
     return list(conflitos.values())
+
+
+def desativar_horario(session: Session, horario_id: uuid.UUID) -> Horario:
+    horario = buscar_horario_por_id(session, horario_id)
+    if horario is None:
+        raise HorarioNaoEncontradoError(horario_id)
+    if not horario.ativo:
+        raise HorarioJaInativoError(horario_id)
+    horario.ativo = False
+    session.flush()
+    return horario
