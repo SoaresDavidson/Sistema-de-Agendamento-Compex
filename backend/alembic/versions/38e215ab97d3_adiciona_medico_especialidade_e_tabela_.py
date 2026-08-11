@@ -8,8 +8,8 @@ Create Date: 2026-08-11 17:21:52.573858
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = '38e215ab97d3'
 down_revision: str | None = 'c283745678c4'
@@ -37,8 +37,10 @@ def upgrade() -> None:
     op.create_table('medico_especialidade',
     sa.Column('medico_id', sa.Uuid(), nullable=False),
     sa.Column('especialidade_id', sa.Uuid(), nullable=False),
-    sa.ForeignKeyConstraint(['especialidade_id'], ['especialidades.id'], ),
-    sa.ForeignKeyConstraint(['medico_id'], ['medicos.id'], ),
+    sa.ForeignKeyConstraint(
+        ['especialidade_id'], ['especialidades.id'], ondelete='CASCADE'
+    ),
+    sa.ForeignKeyConstraint(['medico_id'], ['medicos.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('medico_id', 'especialidade_id')
     )
     # ### end Alembic commands ###
