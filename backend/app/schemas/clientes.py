@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Annotated
 
 from pydantic import (
@@ -29,7 +29,7 @@ class ClienteBase(BaseModel):
     @field_validator("data_nascimento")
     @classmethod
     def validar_data_nascimento(cls, valor: date) -> date:
-        if valor > datetime.datetime.now(tz=...).date():
+        if valor > datetime.now(UTC).date():
             raise ValueError("data de nascimento não pode ser futura")
         return valor
 

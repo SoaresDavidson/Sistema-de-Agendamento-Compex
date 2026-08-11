@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -76,9 +76,7 @@ def test_rejeita_campo_obrigatorio_ausente(campo: str) -> None:
 
 def test_rejeita_data_nascimento_futura() -> None:
     payload = payload_valido()
-    payload["data_nascimento"] = datetime.datetime.now(tz=...).date() + timedelta(
-        days=1
-    )
+    payload["data_nascimento"] = datetime.now(UTC).date() + timedelta(days=1)
 
     with pytest.raises(
         ValidationError,
