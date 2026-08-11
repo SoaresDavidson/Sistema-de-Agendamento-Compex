@@ -15,13 +15,13 @@ function getCurrentDate(date = new Date()) {
 }
 
 const routeTitles: Record<string, string> = {
-	"/agendamentos": "Agendamentos",
-	"/clientes": "Clientes",
+  "/agendamentos": "Agendamentos",
+  "/clientes": "Clientes",
 };
 
 export function DashboardHeader() {
 	const { pathname } = useLocation();
-	const pageTitle = routeTitles[pathname] ?? "Visão geral";
+  	const pageTitle = routeTitles[pathname] ?? "Visão geral";
 	return (
 		<header className="sticky top-0 flex h-18 items-center justify-between border-b border-border px-8">
 			<p className="font-sans text-sm text-muted-foreground">
