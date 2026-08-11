@@ -66,9 +66,10 @@ def client(
     `DATABASE_URL` no nível do módulo. Como `banco_postgres` já validou a
     presença de `DATABASE_URL` antes deste ponto, o import é seguro.
     """
-    from main import app
-    from app.database import get_db
     from starlette.testclient import TestClient
+
+    from app.database import get_db
+    from main import app
 
     session, medico_id = banco_postgres
     app.dependency_overrides[get_db] = lambda: session

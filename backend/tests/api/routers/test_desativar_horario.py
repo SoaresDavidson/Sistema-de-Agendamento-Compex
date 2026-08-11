@@ -7,7 +7,6 @@ from starlette.testclient import TestClient
 
 from app.models.horario import Horario
 from app.repositories.horario import buscar_horario_por_id
-from app.schemas.horario import HorarioCreate
 
 pytestmark = pytest.mark.integration
 
