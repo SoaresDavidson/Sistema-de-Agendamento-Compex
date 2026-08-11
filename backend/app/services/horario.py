@@ -196,4 +196,3 @@ def desativar_horario(session: Session, horario_id: uuid.UUID) -> Horario:
     horario.ativo = False
     session.flush()
     return horario
-

@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
@@ -6,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.api import horarios as api_horarios
+from app.api.routers import horarios as api_horarios
 from app.database import get_db
 from app.models.horario import Horario
 from app.schemas.horario import HorarioCreate
@@ -24,7 +25,7 @@ def session() -> MagicMock:
 
 
 @pytest.fixture
-def client(session: MagicMock) -> TestClient:
+def client(session: MagicMock) -> Iterator[TestClient]:
     app.dependency_overrides[get_db] = lambda: session
 
     with TestClient(app) as test_client:

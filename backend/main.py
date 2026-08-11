@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers.horarios import router as horarios_router
+from app.api.router import api_router
 
 app = FastAPI(title="Compex API")
 
@@ -13,7 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(horarios_router)
+app.include_router(api_router)
 
 
 @app.get("/")
