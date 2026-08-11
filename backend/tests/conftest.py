@@ -4,7 +4,7 @@ from collections.abc import Generator
 
 import pytest
 from dotenv import load_dotenv
-from sqlalchemy import Column, Table, Uuid, create_engine, insert
+from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import Session
 
 from app.models import Base
@@ -22,10 +22,9 @@ pytestmark_integration = pytest.mark.integration
 def banco_postgres() -> Generator[tuple[Session, uuid.UUID]]:
     """Sobe um PostgreSQL efêmero via DATABASE_URL + transação rollback-able.
 
-    Cria uma tabela mínima de `medicos` (apenas PK id UUID) para satisfazer a
-    foreign key de `horarios`, e executa `Base.metadata.create_all` dentro da
-    transação. Tudo é desfeito ao final, garantindo isolamento total entre
-    testes. Pula automaticamente quando `DATABASE_URL` não está definida.
+    Cria tabelas registradas no metadata e um médico para satisfazer a foreign
+    key de `horarios`. Tudo é desfeito ao final, garantindo isolamento total
+    entre testes. Pula quando `DATABASE_URL` não está definida.
     """
     database_url = os.getenv("DATABASE_URL")
     if database_url is None:
@@ -34,20 +33,16 @@ def banco_postgres() -> Generator[tuple[Session, uuid.UUID]]:
     engine = create_engine(database_url)
     medico_id = uuid.uuid4()
 
-    medicos = Base.metadata.tables.get("medicos")
-    if medicos is None:
-        medicos = Table(
-            "medicos",
-            Base.metadata,
-            Column("id", Uuid(as_uuid=True), primary_key=True),
-        )
+    medicos = Base.metadata.tables["medicos"]
 
     with engine.connect() as connection:
         transaction = connection.begin()
 
         try:
             Base.metadata.create_all(connection)
-            connection.execute(insert(medicos).values(id=medico_id))
+            connection.execute(
+                insert(medicos).values(id=medico_id, nome="Medico Teste")
+            )
 
             with Session(
                 bind=connection,
