@@ -1,10 +1,10 @@
 import uuid
+from datetime import date
 
-from pydantic import EmailStr
 from sqlalchemy import (
     CheckConstraint,
     Date,
-    DateTime,
+    Index,
     String,
     Uuid,
     text,
@@ -18,8 +18,13 @@ class Client(Base):
     __tablename__ = "clientes"
     __table_args__ = (
         CheckConstraint(
-            "data_nascimento <= CURRENT_TIMESTAMP",
+            "data_nascimento <= CURRENT_DATE",
             name="ck_cliente_data_nascimento_nao_futura",
+        ),
+        Index(
+            "ix_clientes_nome_data_nascimento",
+            "nome",
+            "data_nascimento",
         ),
     )
 
@@ -29,15 +34,13 @@ class Client(Base):
         default=uuid.uuid4,
         server_default=text("gen_random_uuid()"),
     )
-    nome: Mapped[str] = mapped_column(String(255))
+    nome: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    telefone: Mapped[str] = mapped_column(String(255))
+    telefone: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    email: Mapped[EmailStr | None] = mapped_column(
-        String(255), unique=True, nullable=True
-    )
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    data_nascimento: Mapped[Date] = mapped_column(
-        Date(timezone=True),
+    data_nascimento: Mapped[date] = mapped_column(
+        Date,
         nullable=False,
     )
