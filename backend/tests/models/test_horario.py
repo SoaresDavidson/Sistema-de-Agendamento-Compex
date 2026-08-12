@@ -1,6 +1,7 @@
 from sqlalchemy import CheckConstraint
 
 from app.models.horario import Horario
+from app.models.medico import Medico
 
 
 def test_modelo_possui_campos_esperados() -> None:
@@ -22,6 +23,16 @@ def test_medico_e_obrigatorio() -> None:
 
     assert medico_id.nullable is False
     assert chave_estrangeira.target_fullname == "medicos.id"
+
+
+def test_horario_e_medico_possuem_relacionamento_bidirecional() -> None:
+    relacionamento_medico = Horario.medico.property
+    relacionamento_horarios = Medico.horarios.property
+
+    assert relacionamento_medico.mapper.class_ is Medico
+    assert relacionamento_medico.back_populates == "horarios"
+    assert relacionamento_horarios.mapper.class_ is Horario
+    assert relacionamento_horarios.back_populates == "medico"
 
 
 def test_inicio_e_fim_sao_obrigatorios_e_possuem_fuso_horario() -> None:
