@@ -1,10 +1,14 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Uuid, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.medico import Medico
 
 
 class Horario(Base):
@@ -24,6 +28,7 @@ class Horario(Base):
         ForeignKey("medicos.id"),
         nullable=False,
     )
+    medico: Mapped["Medico"] = relationship(back_populates="horarios")
     inicio: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import TimestampedBase
 from app.models.especialidade import Especialidade
 from app.models.medico_especialidade import tabela_medico_especialidade
+
+if TYPE_CHECKING:
+    from app.models.horario import Horario
 
 
 class Medico(TimestampedBase):
@@ -13,3 +18,4 @@ class Medico(TimestampedBase):
     especialidades: Mapped[list[Especialidade]] = relationship(
         secondary=tabela_medico_especialidade
     )
+    horarios: Mapped[list["Horario"]] = relationship(back_populates="medico")

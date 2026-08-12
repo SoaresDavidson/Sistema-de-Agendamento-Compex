@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy.orm import Session
 
+from app.models.medico import Medico
 from app.repositories.horario import (
     buscar_horario_por_id,
     criar_horario,
@@ -31,11 +32,15 @@ def test_cria_e_consulta_horario_no_postgres(
 
     horario_encontrado = buscar_horario_por_id(session, horario_id)
     horarios = listar_horarios(session)
+    medico = session.get(Medico, medico_id)
 
     assert horario_encontrado is not None
+    assert medico is not None
     assert horario_encontrado.id == horario_id
     assert horario_encontrado.medico_id == medico_id
+    assert horario_encontrado.medico is medico
     assert horario_encontrado.inicio == inicio
     assert horario_encontrado.fim == dados.fim
     assert horario_encontrado.ativo is True
     assert [horario.id for horario in horarios] == [horario_id]
+    assert [horario.id for horario in medico.horarios] == [horario_id]
