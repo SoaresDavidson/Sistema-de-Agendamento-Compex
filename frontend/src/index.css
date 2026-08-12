@@ -371,6 +371,19 @@ code {
 	}
 }
 
+/* Estado vazio — espelho do protótipo (agendamentos) */
+.empty-mark {
+	width: 46px;
+	height: 46px;
+	border-radius: 12px;
+	background: var(--accent-bg);
+	color: var(--accent);
+	display: grid;
+	place-items: center;
+	margin: 0 auto 14px;
+	font-size: 22px;
+}
+
 /* Design system do protótipo — modal de cancelamento */
 .modal-backdrop {
 	position: fixed;

@@ -273,3 +273,170 @@ describe("AgendamentosPage — filtros da listagem", () => {
 		});
 	});
 });
+
+describe("AgendamentosPage — estado de carregamento", () => {
+	beforeEach(() => {
+		mockListAppointments.mockReset();
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("exibe skeleton durante a busca inicial e some ao chegar os dados", async () => {
+		// trava a primeira chamada (inicial) para observarmos o skeleton
+		let resolveList!: (r: PaginatedResponse<Appointment>) => void;
+		mockListAppointments.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					resolveList = resolve;
+				}),
+		);
+
+		render(<AgendamentosPage />);
+
+		// durante o carregamento inicial: skeleton visível, sem tabela
+		await vi.waitFor(() => {
+			expect(
+				document.querySelectorAll('[data-slot="skeleton"]').length,
+			).toBeGreaterThan(0);
+		});
+		expect(screen.getByText("—")).toBeInTheDocument();
+		expect(screen.queryByRole("table")).toBeNull();
+
+		// ao resolver a promise: dados aparecem, skeleton some
+		resolveList(buildResponse(1));
+		expect(await screen.findByText("Cliente 1")).toBeInTheDocument();
+		expect(screen.getByText("7 resultados")).toBeInTheDocument();
+		expect(document.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(0);
+	});
+
+	it("exibe skeleton ao trocar de página", async () => {
+		const user = userEvent.setup();
+		mockListAppointments.mockImplementation(async ({ page }) =>
+			Promise.resolve(buildResponse(page)),
+		);
+
+		render(<AgendamentosPage />);
+		await screen.findByText("Cliente 1");
+
+		// segunda chamada (página 2) fica pendente
+		let resolvePage2!: (r: PaginatedResponse<Appointment>) => void;
+		mockListAppointments.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					resolvePage2 = resolve;
+				}),
+		);
+		await user.click(screen.getByRole("button", { name: "Página 2" }));
+
+		// skeleton voltou a aparecer durante o flip de página
+		await vi.waitFor(() => {
+			expect(
+				document.querySelectorAll('[data-slot="skeleton"]').length,
+			).toBeGreaterThan(0);
+		});
+		expect(screen.queryByText("Cliente 6")).toBeNull();
+
+		resolvePage2(buildResponse(2));
+		expect(await screen.findByText("Cliente 6")).toBeInTheDocument();
+	});
+
+	it("exibe skeleton ao aplicar filtro (select de status)", async () => {
+		const user = userEvent.setup();
+		mockListAppointments.mockImplementation(async ({ page }) =>
+			Promise.resolve(buildResponse(page)),
+		);
+
+		render(<AgendamentosPage />);
+		await screen.findByText("Cliente 1");
+
+		// próxima chamada (com filtro) fica pendente
+		let resolveFiltered!: (r: PaginatedResponse<Appointment>) => void;
+		mockListAppointments.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					resolveFiltered = resolve;
+				}),
+		);
+		await user.selectOptions(screen.getByLabelText("Status"), "AGENDADO");
+
+		await vi.waitFor(() => {
+			expect(
+				document.querySelectorAll('[data-slot="skeleton"]').length,
+			).toBeGreaterThan(0);
+		});
+
+		resolveFiltered(buildResponse(1));
+		expect(await screen.findByText("Cliente 1")).toBeInTheDocument();
+	});
+});
+
+describe("AgendamentosPage — estado vazio", () => {
+	const emptyResponse: PaginatedResponse<Appointment> = {
+		items: [],
+		page: 1,
+		size: 5,
+		total: 0,
+		totalPages: 0,
+	};
+
+	beforeEach(() => {
+		mockListAppointments.mockReset();
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("exibe mensagem de vazio sem botão Limpar filtros quando não há filtros ativos", async () => {
+		mockListAppointments.mockResolvedValue(emptyResponse);
+
+		render(<AgendamentosPage />);
+
+		expect(await screen.findByText("Nenhum agendamento")).toBeInTheDocument();
+		expect(
+			screen.getByText("Ainda não há agendamentos cadastrados."),
+		).toBeInTheDocument();
+		expect(screen.queryByRole("table")).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: /Limpar filtros/i }),
+		).toBeNull();
+		expect(screen.getByText("0 resultados")).toBeInTheDocument();
+	});
+
+	it("exibe vazio com botão Limpar filtros e restaura listagem ao clicar", async () => {
+		const user = userEvent.setup();
+		// com filtro status=AGENDADO → vazio; sem filtro → buildResponse(1)
+		mockListAppointments.mockImplementation(async ({ filters }) =>
+			filters && filters.status === "AGENDADO"
+				? Promise.resolve(emptyResponse)
+				: Promise.resolve(buildResponse(1)),
+		);
+
+		render(<AgendamentosPage />);
+		await screen.findByText("Cliente 1");
+
+		await user.selectOptions(screen.getByLabelText("Status"), "AGENDADO");
+
+		// estado vazio com ação de limpar
+		expect(
+			await screen.findByText("Nenhum agendamento encontrado"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"Revise os filtros ou limpe a busca para voltar à listagem completa.",
+			),
+		).toBeInTheDocument();
+		const limparBtn = screen.getByRole("button", { name: /Limpar filtros/i });
+		expect(limparBtn).toBeInTheDocument();
+		expect(limparBtn).toHaveAttribute("type", "button");
+
+		// clica em Limpar filtros → restaura a listagem
+		await user.click(limparBtn);
+		expect(await screen.findByText("Cliente 1")).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: /Limpar filtros/i }),
+		).toBeNull();
+	});
+});

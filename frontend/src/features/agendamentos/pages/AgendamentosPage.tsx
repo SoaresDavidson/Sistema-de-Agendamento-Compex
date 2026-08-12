@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/Button";
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/components/ui/Empty";
 import { ErrorState } from "@/components/ui/Error";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
@@ -19,6 +28,21 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 const SKELETON_IDS = ["1", "2", "3", "4", "5"] as const;
 const DEBOUNCE_MS = 300;
+
+function hasActiveFilters(
+	filters: AppointmentFilters,
+	rawClientSearch: string,
+): boolean {
+	const trimmed = rawClientSearch.trim();
+	return (
+		trimmed !== "" ||
+		filters.cliente !== undefined ||
+		filters.medico !== undefined ||
+		filters.especialidade !== undefined ||
+		filters.status !== undefined ||
+		filters.data !== undefined
+	);
+}
 
 export function AgendamentosPage() {
 	const [rawClientSearch, setRawClientSearch] = useState("");
@@ -77,7 +101,7 @@ export function AgendamentosPage() {
 				</p>
 			</header>
 
-			<div className="mx-auto max-w-5xl px-8">
+			<div className="mx-auto max-w-5xl px-8" aria-busy={loading}>
 				<AppointmentsFilters
 					filters={filters}
 					medicos={medicos}
@@ -89,7 +113,7 @@ export function AgendamentosPage() {
 				/>
 
 				<div className="mb-3 flex items-center justify-between">
-					<span className="breadcrumb">
+					<span className="breadcrumb" aria-live="polite">
 						{data
 							? `${data.total} resultado${data.total === 1 ? "" : "s"}`
 							: "—"}
@@ -98,7 +122,7 @@ export function AgendamentosPage() {
 				</div>
 
 				{loading && (
-					<div className="table-wrap">
+					<div className="table-wrap" role="status" aria-live="polite">
 						<div className="flex flex-col gap-4 p-6">
 							{SKELETON_IDS.map((id) => (
 								<Skeleton key={`skeleton-${id}`} className="h-10 w-full" />
@@ -128,9 +152,37 @@ export function AgendamentosPage() {
 				)}
 
 				{!loading && !error && data && data.items.length === 0 && (
-					<div className="table-wrap p-12 text-center">
-						<p>Nenhum agendamento encontrado.</p>
-					</div>
+					<Empty className="table-wrap" role="status" aria-live="polite">
+						{hasActiveFilters(filters, rawClientSearch) ? (
+							<>
+								<EmptyHeader>
+									<EmptyMedia variant="icon" className="empty-mark">
+										⌕
+									</EmptyMedia>
+									<EmptyTitle>Nenhum agendamento encontrado</EmptyTitle>
+									<EmptyDescription>
+										Revise os filtros ou limpe a busca para voltar à listagem
+										completa.
+									</EmptyDescription>
+								</EmptyHeader>
+								<EmptyContent>
+									<Button variant="secondary" onClick={handleClear}>
+										Limpar filtros
+									</Button>
+								</EmptyContent>
+							</>
+						) : (
+							<EmptyHeader>
+								<EmptyMedia variant="icon" className="empty-mark">
+									⌕
+								</EmptyMedia>
+								<EmptyTitle>Nenhum agendamento</EmptyTitle>
+								<EmptyDescription>
+									Ainda não há agendamentos cadastrados.
+								</EmptyDescription>
+							</EmptyHeader>
+						)}
+					</Empty>
 				)}
 			</div>
 
