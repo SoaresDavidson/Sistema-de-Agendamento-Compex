@@ -1,19 +1,62 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ErrorState } from "@/components/ui/Error";
 import { Skeleton } from "@/components/ui/Skeleton";
-import type { Appointment, CancelamentoPayload } from "../api/types";
+import {
+	extractFilterOptions,
+	MOCK_APPOINTMENTS,
+} from "../api/mockAppointments";
+import type {
+	Appointment,
+	AppointmentFilters,
+	CancelamentoPayload,
+} from "../api/types";
+import { AppointmentsFilters } from "../components/AppointmentsFilters";
 import { AppointmentsPagination } from "../components/AppointmentsPagination";
 import { AppointmentsTable } from "../components/AppointmentsTable";
 import { CancelamentoModal } from "../components/CancelamentoModal";
 import { useAppointments } from "../hooks/useAppointments";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 const SKELETON_IDS = ["1", "2", "3", "4", "5"] as const;
+const DEBOUNCE_MS = 300;
 
 export function AgendamentosPage() {
-	const { data, loading, error, page, setPage } = useAppointments(1);
+	const [rawClientSearch, setRawClientSearch] = useState("");
+	const debouncedClientSearch = useDebouncedValue(rawClientSearch, DEBOUNCE_MS);
+	const [filters, setFilters] = useState<AppointmentFilters>({});
+
+	useEffect(() => {
+		const trimmed = debouncedClientSearch.trim();
+		setFilters((prev) =>
+			trimmed === ""
+				? { ...prev, cliente: undefined }
+				: { ...prev, cliente: trimmed },
+		);
+	}, [debouncedClientSearch]);
+
+	const { data, loading, error, page, setPage } = useAppointments(1, filters);
 	const [alvoCancelamento, setAlvoCancelamento] = useState<Appointment | null>(
 		null,
 	);
+
+	const { medicos, especialidades } = useMemo(
+		() => extractFilterOptions(MOCK_APPOINTMENTS),
+		[],
+	);
+
+	const handleFiltersChange = (next: AppointmentFilters) => {
+		setFilters((prev) => ({
+			...next,
+			cliente: prev.cliente,
+		}));
+		setPage(1);
+	};
+
+	const handleClear = () => {
+		setRawClientSearch("");
+		setFilters({});
+		setPage(1);
+	};
 
 	const handleConfirmarCancelamento = (payload: CancelamentoPayload) => {
 		if (alvoCancelamento === null) return;
@@ -35,6 +78,16 @@ export function AgendamentosPage() {
 			</header>
 
 			<div className="mx-auto max-w-5xl px-8">
+				<AppointmentsFilters
+					filters={filters}
+					medicos={medicos}
+					especialidades={especialidades}
+					clientSearchValue={rawClientSearch}
+					onClientSearchChange={setRawClientSearch}
+					onFiltersChange={handleFiltersChange}
+					onClear={handleClear}
+				/>
+
 				<div className="mb-3 flex items-center justify-between">
 					<span className="breadcrumb">
 						{data

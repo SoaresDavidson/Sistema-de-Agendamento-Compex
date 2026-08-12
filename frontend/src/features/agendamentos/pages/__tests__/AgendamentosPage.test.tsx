@@ -1,7 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Appointment, PaginatedResponse } from "../../api/types";
+import type {
+	Appointment,
+	AppointmentFilters,
+	PaginatedResponse,
+} from "../../api/types";
 import { AgendamentosPage } from "../AgendamentosPage";
 
 const page1: Appointment[] = [
@@ -75,8 +79,11 @@ const page2: Appointment[] = [
 const mockListAppointments = vi.fn();
 
 vi.mock("../../api/appointmentsApi", () => ({
-	listAppointments: (params: { page: number; size: number }) =>
-		mockListAppointments(params),
+	listAppointments: (params: {
+		page: number;
+		size: number;
+		filters?: AppointmentFilters;
+	}) => mockListAppointments(params),
 }));
 
 function buildResponse(page: number): PaginatedResponse<Appointment> {
@@ -109,7 +116,11 @@ describe("AgendamentosPage — integração de paginação", () => {
 		expect(
 			screen.getByText((content) => content.includes("Página 1 de 2")),
 		).toBeInTheDocument();
-		expect(mockListAppointments).toHaveBeenCalledWith({ page: 1, size: 5 });
+		expect(mockListAppointments).toHaveBeenCalledWith({
+			page: 1,
+			size: 5,
+			filters: {},
+		});
 	});
 
 	it("ao clicar na página 2, busca novos registros e atualiza a contagem", async () => {
@@ -122,7 +133,11 @@ describe("AgendamentosPage — integração de paginação", () => {
 		await user.click(screen.getByRole("button", { name: "Página 2" }));
 
 		expect(await screen.findByText("Cliente 6")).toBeInTheDocument();
-		expect(mockListAppointments).toHaveBeenCalledWith({ page: 2, size: 5 });
+		expect(mockListAppointments).toHaveBeenCalledWith({
+			page: 2,
+			size: 5,
+			filters: {},
+		});
 
 		const rows = screen.getAllByRole("row").slice(1);
 		expect(rows).toHaveLength(2);
@@ -138,5 +153,123 @@ describe("AgendamentosPage — integração de paginação", () => {
 		expect(
 			screen.getByRole("button", { name: "Página anterior" }),
 		).toBeDisabled();
+	});
+});
+
+describe("AgendamentosPage — filtros da listagem", () => {
+	beforeEach(() => {
+		mockListAppointments.mockReset();
+		mockListAppointments.mockImplementation(async ({ page }) =>
+			Promise.resolve(buildResponse(page)),
+		);
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("renderiza o toolbar de filtros com os 6 campos acima da tabela", async () => {
+		render(<AgendamentosPage />);
+		await screen.findByText("Cliente 1");
+		expect(screen.getByLabelText("Buscar cliente")).toBeInTheDocument();
+		expect(screen.getByLabelText("Médico")).toBeInTheDocument();
+		expect(screen.getByLabelText("Especialidade")).toBeInTheDocument();
+		expect(screen.getByLabelText("Status")).toBeInTheDocument();
+		expect(screen.getByLabelText("Data")).toBeInTheDocument();
+	});
+
+	it("alterar o select de Status dispara chamada com filtro e volta para página 1", async () => {
+		const user = userEvent.setup();
+		render(<AgendamentosPage />);
+		await screen.findByText("Cliente 1");
+		await user.click(screen.getByRole("button", { name: "Página 2" }));
+		await screen.findByText("Cliente 6");
+		mockListAppointments.mockClear();
+
+		await user.selectOptions(screen.getByLabelText("Status"), "AGENDADO");
+
+		expect(mockListAppointments).toHaveBeenCalledWith({
+			page: 1,
+			size: 5,
+			filters: { status: "AGENDADO" },
+		});
+	});
+
+	it("digitar no campo de cliente aplica debounce de 300ms antes de buscar", async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		vi.clearAllMocks();
+		mockListAppointments.mockImplementation(async ({ page }) =>
+			Promise.resolve(buildResponse(page)),
+		);
+
+		const user = userEvent.setup({
+			advanceTimers: vi.advanceTimersByTime.bind(vi),
+		});
+		render(<AgendamentosPage />);
+		// aguarda a chamada inicial (sem filtros)
+		await vi.waitFor(() => {
+			expect(mockListAppointments).toHaveBeenCalledWith({
+				page: 1,
+				size: 5,
+				filters: {},
+			});
+		});
+		mockListAppointments.mockClear();
+
+		const input = screen.getByLabelText("Buscar cliente");
+		await user.type(input, "Ana");
+
+		// imediatamente após digitar, nenhuma chamada com filtro
+		expect(mockListAppointments).not.toHaveBeenCalled();
+		// aguarda o debounce
+		await vi.advanceTimersByTimeAsync(350);
+
+		await vi.waitFor(() => {
+			expect(mockListAppointments).toHaveBeenCalledWith({
+				page: 1,
+				size: 5,
+				filters: { cliente: "Ana" },
+			});
+		});
+
+		vi.useRealTimers();
+	});
+
+	it("botão Limpar zera filtros e volta para página 1", async () => {
+		const user = userEvent.setup();
+		render(<AgendamentosPage />);
+		await screen.findByText("Cliente 1");
+
+		await user.type(screen.getByLabelText("Buscar cliente"), "Ana");
+		await new Promise((r) => setTimeout(r, 350));
+		await screen.findByText("Cliente 1");
+		mockListAppointments.mockClear();
+
+		await user.click(screen.getByRole("button", { name: "Limpar" }));
+
+		await vi.waitFor(() => {
+			expect(mockListAppointments).toHaveBeenCalledWith({
+				page: 1,
+				size: 5,
+				filters: {},
+			});
+		});
+	});
+
+	it("filtro por data dispara chamada com data em ISO", async () => {
+		const user = userEvent.setup();
+		render(<AgendamentosPage />);
+		await screen.findByText("Cliente 1");
+		mockListAppointments.mockClear();
+
+		await user.type(screen.getByLabelText("Data"), "2026-08-10");
+
+		await vi.waitFor(() => {
+			expect(mockListAppointments).toHaveBeenCalledWith({
+				page: 1,
+				size: 5,
+				filters: { data: "2026-08-10" },
+			});
+		});
 	});
 });

@@ -1,6 +1,5 @@
-import { NavLink } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
-
+import { NavLink } from "react-router-dom";
 
 export function AgendamentosNavLink() {
 	return (
