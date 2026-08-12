@@ -19,12 +19,28 @@ Nome = Annotated[
     ),
 ]
 
+Telefone = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=1,
+        max_length=255,
+    ),
+]
+
 
 class ClienteBase(BaseModel):
     nome: Nome
-    telefone: str
+    telefone: Telefone
     email: EmailStr | None = None
     data_nascimento: date
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalizar_email_vazio(cls, valor: object) -> object:
+        if isinstance(valor, str) and not valor.strip():
+            return None
+        return valor
 
     @field_validator("data_nascimento")
     @classmethod
