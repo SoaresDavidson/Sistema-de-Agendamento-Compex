@@ -1,12 +1,13 @@
 import uuid
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime, time, timedelta
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.horario import Horario
-from app.schemas.horario import HorarioCreate
+from app.models.medico import Medico
+from app.schemas.horario import HorarioCreate, HorarioDisponivelFiltros
 
 
 def criar_horario(session: Session, dados: HorarioCreate) -> Horario:
@@ -25,6 +26,40 @@ def buscar_horario_por_id(
 
 def listar_horarios(session: Session) -> Sequence[Horario]:
     statement = select(Horario).order_by(Horario.inicio, Horario.id)
+    return session.scalars(statement).all()
+
+
+def listar_horarios_filtrados(
+    session: Session,
+    filtros: HorarioDisponivelFiltros,
+) -> Sequence[Horario]:
+    statement = (
+        select(Horario)
+        .options(
+            joinedload(Horario.medico).selectinload(Medico.especialidades),
+            selectinload(Horario.agendamentos),
+        )
+        .order_by(Horario.inicio, Horario.id)
+    )
+
+    if filtros.data is not None:
+        inicio_do_dia = datetime.combine(filtros.data, time.min, tzinfo=UTC)
+        fim_do_dia = inicio_do_dia + timedelta(days=1)
+        statement = statement.where(
+            Horario.inicio >= inicio_do_dia,
+            Horario.inicio < fim_do_dia,
+        )
+
+    if filtros.medico_id is not None:
+        statement = statement.where(Horario.medico_id == filtros.medico_id)
+
+    if filtros.especialidade_id is not None:
+        statement = statement.where(
+            Horario.medico.has(
+                Medico.especialidades.any(id=filtros.especialidade_id)
+            )
+        )
+
     return session.scalars(statement).all()
 
 
