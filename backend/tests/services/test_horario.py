@@ -1,12 +1,19 @@
 import uuid
 from datetime import UTC, date, datetime, time, timedelta
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy.orm import Session
 
+from app.models.agendamento import StatusAgendamento
 from app.models.horario import Horario
-from app.schemas.horario import DiaSemana, HorarioCreate, HorarioLoteCreate
+from app.schemas.horario import (
+    DiaSemana,
+    HorarioCreate,
+    HorarioDisponivelFiltros,
+    HorarioLoteCreate,
+)
 from app.services import horario as servico_horario
 from app.services.horario import (
     HorarioConflitanteError,
@@ -15,7 +22,9 @@ from app.services.horario import (
     IntervaloHorarioInvalidoError,
     cadastrar_horario_individual,
     cadastrar_horarios_em_lote,
+    consultar_horarios_disponiveis,
     gerar_horarios_do_lote,
+    horario_esta_disponivel,
 )
 
 
@@ -45,6 +54,84 @@ def criar_lote(
     }
     dados.update(alteracoes)
     return HorarioLoteCreate(**dados)
+
+
+def criar_horario_para_disponibilidade(
+    *,
+    inicio: datetime | None = None,
+    ativo: bool = True,
+    status_agendamento: StatusAgendamento | None = None,
+) -> SimpleNamespace:
+    agendamentos = (
+        [SimpleNamespace(status=status_agendamento)]
+        if status_agendamento is not None
+        else []
+    )
+    return SimpleNamespace(
+        ativo=ativo,
+        inicio=inicio or datetime(2030, 1, 7, 8, tzinfo=UTC),
+        agendamentos=agendamentos,
+    )
+
+
+@pytest.mark.parametrize(
+    "horario",
+    [
+        criar_horario_para_disponibilidade(ativo=False),
+        criar_horario_para_disponibilidade(
+            inicio=datetime(2030, 1, 1, tzinfo=UTC)
+        ),
+        criar_horario_para_disponibilidade(
+            status_agendamento=StatusAgendamento.AGENDADO
+        ),
+    ],
+    ids=["inativo", "ocorrido", "agendado"],
+)
+def test_horario_indisponivel_quando_inativo_ocorrido_ou_agendado(
+    horario: Horario,
+) -> None:
+    assert not horario_esta_disponivel(
+        horario,
+        agora=datetime(2030, 1, 2, tzinfo=UTC),
+    )
+
+
+@pytest.mark.parametrize(
+    "status_agendamento",
+    [None, StatusAgendamento.CANCELADO],
+    ids=["sem_agendamento", "cancelado"],
+)
+def test_horario_ativo_futuro_sem_agendamento_ativo_esta_disponivel(
+    status_agendamento: StatusAgendamento | None,
+) -> None:
+    horario = criar_horario_para_disponibilidade(
+        status_agendamento=status_agendamento
+    )
+
+    assert horario_esta_disponivel(
+        horario,
+        agora=datetime(2030, 1, 2, tzinfo=UTC),
+    )
+
+
+def test_consulta_de_disponibilidade_delega_filtros_e_remove_indisponiveis(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = MagicMock(spec=Session)
+    filtros = HorarioDisponivelFiltros(medico_id=uuid.uuid4())
+    disponivel = criar_horario_para_disponibilidade()
+    indisponivel = criar_horario_para_disponibilidade(ativo=False)
+    listar = MagicMock(return_value=[disponivel, indisponivel])
+    monkeypatch.setattr(servico_horario, "listar_horarios_filtrados", listar)
+
+    resultado = consultar_horarios_disponiveis(
+        session,
+        filtros,
+        agora=datetime(2030, 1, 2, tzinfo=UTC),
+    )
+
+    assert resultado == [disponivel]
+    listar.assert_called_once_with(session, filtros)
 
 
 def test_cadastro_individual_persiste_horario_sem_conflitos(

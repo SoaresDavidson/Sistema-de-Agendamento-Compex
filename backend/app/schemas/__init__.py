@@ -7,9 +7,12 @@ from app.schemas.especialidade import (
 from app.schemas.horario import (
     DiaSemana,
     HorarioCreate,
+    HorarioDisponivelFiltros,
+    HorarioDisponivelResponse,
     HorarioLoteCreate,
     HorarioResponse,
     HorariosLoteResponse,
+    MedicoHorarioDisponivelResponse,
 )
 from app.schemas.medico import MedicoCreate, MedicoPage, MedicoResponse
 
@@ -21,10 +24,13 @@ __all__ = [
     "EspecialidadePage",
     "EspecialidadeResponse",
     "HorarioCreate",
+    "HorarioDisponivelFiltros",
+    "HorarioDisponivelResponse",
     "HorarioLoteCreate",
     "HorarioResponse",
     "HorariosLoteResponse",
     "MedicoCreate",
+    "MedicoHorarioDisponivelResponse",
     "MedicoPage",
     "MedicoResponse",
 ]

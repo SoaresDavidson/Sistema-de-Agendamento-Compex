@@ -1,16 +1,23 @@
 import uuid
 from collections.abc import Sequence
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.models.agendamento import StatusAgendamento
 from app.models.horario import Horario
 from app.repositories.horario import (
     buscar_horario_por_id,
     buscar_horarios_sobrepostos,
     criar_horario,
+    listar_horarios_filtrados,
 )
-from app.schemas.horario import DiaSemana, HorarioCreate, HorarioLoteCreate
+from app.schemas.horario import (
+    DiaSemana,
+    HorarioCreate,
+    HorarioDisponivelFiltros,
+    HorarioLoteCreate,
+)
 
 
 class IntervaloHorarioInvalidoError(ValueError):
@@ -46,6 +53,33 @@ class HorarioNaoEncontradoError(LookupError):
 
 class HorarioJaInativoError(Exception):
     """Indica que o horário já está inativo."""
+
+
+def horario_esta_disponivel(
+    horario: Horario,
+    agora: datetime | None = None,
+) -> bool:
+    referencia = agora or datetime.now(UTC)
+    possui_agendamento_ativo = any(
+        agendamento.status == StatusAgendamento.AGENDADO
+        for agendamento in horario.agendamentos
+    )
+
+    return horario.ativo and horario.inicio > referencia and not possui_agendamento_ativo
+
+
+def consultar_horarios_disponiveis(
+    session: Session,
+    filtros: HorarioDisponivelFiltros,
+    agora: datetime | None = None,
+) -> list[Horario]:
+    referencia = agora or datetime.now(UTC)
+    horarios = listar_horarios_filtrados(session, filtros)
+    return [
+        horario
+        for horario in horarios
+        if horario_esta_disponivel(horario, referencia)
+    ]
 
 
 def cadastrar_horario_individual(

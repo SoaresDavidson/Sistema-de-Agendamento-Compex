@@ -42,6 +42,28 @@ class HorarioResponse(HorarioBase):
     ativo: bool
 
 
+class HorarioDisponivelFiltros(BaseModel):
+    data: date | None = None
+    medico_id: uuid.UUID | None = None
+    especialidade_id: uuid.UUID | None = None
+
+
+class MedicoHorarioDisponivelResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    nome: str
+
+
+class HorarioDisponivelResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    inicio: datetime
+    fim: datetime
+    medico: MedicoHorarioDisponivelResponse
+
+
 class HorariosLoteResponse(BaseModel):
     horarios: list[HorarioResponse]
     total_criados: int
