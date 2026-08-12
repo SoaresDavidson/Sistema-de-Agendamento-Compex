@@ -18,9 +18,18 @@ export interface PaginatedResponse<T> {
 	totalPages: number;
 }
 
+export type AppointmentFilters = {
+	cliente?: string;
+	medico?: string;
+	especialidade?: string;
+	status?: AppointmentStatus;
+	data?: string;
+};
+
 export interface ListAppointmentsParams {
 	page: number;
 	size: number;
+	filters?: AppointmentFilters;
 }
 
 export const APPOINTMENTS_PAGE_SIZE = 5;

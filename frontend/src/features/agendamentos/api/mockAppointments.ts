@@ -1,4 +1,8 @@
-import type { Appointment, PaginatedResponse } from "./types";
+import type {
+	Appointment,
+	AppointmentFilters,
+	PaginatedResponse,
+} from "./types";
 import { APPOINTMENTS_PAGE_SIZE } from "./types";
 
 const MOCK_APPOINTMENTS: Appointment[] = [
@@ -75,7 +79,7 @@ const MOCK_APPOINTMENTS: Appointment[] = [
 		status: "AGENDADO",
 	},
 	{
-    //Felipe: repetindo um agendamento para mais tarde me lembrar de fazer isso quando o backend estiver pronto
+		//Felipe: repetindo um agendamento para mais tarde me lembrar de fazer isso quando o backend estiver pronto
 		id: "a9",
 		cliente: "Felipe Soares",
 		medico: "Dra. Lúcia Fernandes",
@@ -99,11 +103,37 @@ function sorted(items: Appointment[]): Appointment[] {
 	});
 }
 
+function applyFilters(
+	items: Appointment[],
+	filters: AppointmentFilters,
+): Appointment[] {
+	let result = items;
+	if (filters.cliente) {
+		const q = filters.cliente.toLowerCase();
+		result = result.filter((a) => a.cliente.toLowerCase().includes(q));
+	}
+	if (filters.medico) {
+		result = result.filter((a) => a.medico === filters.medico);
+	}
+	if (filters.especialidade) {
+		result = result.filter((a) => a.especialidade === filters.especialidade);
+	}
+	if (filters.status) {
+		result = result.filter((a) => a.status === filters.status);
+	}
+	if (filters.data) {
+		result = result.filter((a) => toIso(a.data) === filters.data);
+	}
+	return result;
+}
+
 export function listMockAppointments(
 	page: number,
 	size: number = APPOINTMENTS_PAGE_SIZE,
+	filters: AppointmentFilters = {},
 ): PaginatedResponse<Appointment> {
-	const items = sorted(MOCK_APPOINTMENTS);
+	const filtered = applyFilters(MOCK_APPOINTMENTS, filters);
+	const items = sorted(filtered);
 	const total = items.length;
 	const totalPages = Math.max(1, Math.ceil(total / size));
 	const safePage = Math.min(Math.max(1, page), totalPages);
@@ -117,3 +147,21 @@ export function listMockAppointments(
 		totalPages,
 	};
 }
+
+export function extractFilterOptions(appointments: Appointment[]): {
+	medicos: string[];
+	especialidades: string[];
+} {
+	const medicos = new Set<string>();
+	const especialidades = new Set<string>();
+	for (const a of appointments) {
+		medicos.add(a.medico);
+		especialidades.add(a.especialidade);
+	}
+	return {
+		medicos: [...medicos].sort((x, y) => x.localeCompare(y)),
+		especialidades: [...especialidades].sort((x, y) => x.localeCompare(y)),
+	};
+}
+
+export { MOCK_APPOINTMENTS };
