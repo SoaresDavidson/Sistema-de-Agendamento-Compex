@@ -28,6 +28,7 @@ def test_cria_cliente_com_dados_validos() -> None:
     assert cliente.telefone == "85999999999"
     assert cliente.email == "ana@example.com"
     assert cliente.data_nascimento == date(1990, 5, 10)
+    assert cliente.confirmar_duplicidade is False
 
 
 def test_email_e_opcional() -> None:
@@ -56,6 +57,15 @@ def test_remove_espacos_externos_do_nome() -> None:
     cliente = ClienteCreate.model_validate(payload)
 
     assert cliente.nome == "Ana Silva"
+
+
+def test_normaliza_espacos_internos_do_nome() -> None:
+    payload = payload_valido()
+    payload["nome"] = "  Ana   Maria  Silva  "
+
+    cliente = ClienteCreate.model_validate(payload)
+
+    assert cliente.nome == "Ana Maria Silva"
 
 
 @pytest.mark.parametrize("nome", ["", "   ", "a" * 256])

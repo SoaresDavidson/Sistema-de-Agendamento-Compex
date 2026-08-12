@@ -34,7 +34,7 @@ class ClienteSemDataNascimento(Exception):
 
 def criar_cliente_service(session: Session, dados: ClienteCreate) -> Client:
     """Na modelagem de dados só é citado caso de cliente duplicado quando nome e data de nascimento são iguas, apesar de fazer sentido bloquear cliente com email ou telefone igual optei por não implementar."""
-    if buscar_possivel_duplicidade(session, dados):
+    if buscar_possivel_duplicidade(session, dados) and not dados.confirmar_duplicidade:
         raise ClienteDuplicado(
             "Já existe um cliente com o mesmo nome e data de nascimento"
         )

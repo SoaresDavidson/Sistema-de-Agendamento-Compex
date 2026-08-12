@@ -35,6 +35,13 @@ class ClienteBase(BaseModel):
     email: EmailStr | None = None
     data_nascimento: date
 
+    @field_validator("nome", mode="before")
+    @classmethod
+    def normalizar_nome(cls, valor: object) -> object:
+        if isinstance(valor, str):
+            return " ".join(valor.split())
+        return valor
+
     @field_validator("email", mode="before")
     @classmethod
     def normalizar_email_vazio(cls, valor: object) -> object:
@@ -51,7 +58,7 @@ class ClienteBase(BaseModel):
 
 
 class ClienteCreate(ClienteBase):
-    pass
+    confirmar_duplicidade: bool = False
 
 
 class ClienteResponse(ClienteBase):

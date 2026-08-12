@@ -38,6 +38,67 @@ def criar_modelo() -> Client:
     )
 
 
+def payload_valido() -> dict[str, object]:
+    return {
+        "nome": "  Ana   Silva  ",
+        "telefone": "85999999999",
+        "email": "ana@example.com",
+        "data_nascimento": "1990-05-10",
+    }
+
+
+def test_cria_cliente_e_retorna_dados_normalizados(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cliente = criar_modelo()
+    criar = MagicMock(return_value=cliente)
+    monkeypatch.setattr(api_clientes, "criar_cliente_service", criar)
+
+    resposta = client.post("/api/clientes", json=payload_valido())
+
+    assert resposta.status_code == 201
+    assert resposta.json() == {
+        "id": str(cliente.id),
+        "nome": "Ana Silva",
+        "telefone": "85999999999",
+        "email": "ana@example.com",
+        "data_nascimento": "1990-05-10",
+    }
+    dados_recebidos = criar.call_args.args[1]
+    assert dados_recebidos.nome == "Ana Silva"
+    assert dados_recebidos.confirmar_duplicidade is False
+    session.commit.assert_called_once_with()
+    session.rollback.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "alteracao",
+    [
+        {"nome": ""},
+        {"telefone": ""},
+        {"email": "email-invalido"},
+        {"data_nascimento": ""},
+        {"data_nascimento": "2999-01-01"},
+    ],
+)
+def test_rejeita_payload_invalido_antes_de_chamar_service(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    alteracao: dict[str, object],
+) -> None:
+    criar = MagicMock()
+    monkeypatch.setattr(api_clientes, "criar_cliente_service", criar)
+    payload = payload_valido() | alteracao
+
+    resposta = client.post("/api/clientes", json=payload)
+
+    assert resposta.status_code == 422
+    assert isinstance(resposta.json()["detail"], list)
+    criar.assert_not_called()
+
+
 def test_lista_clientes_com_paginacao_por_cursor(
     client: TestClient,
     session: MagicMock,
@@ -103,3 +164,21 @@ def test_cliente_duplicado_requer_confirmacao(
     }
     session.rollback.assert_called_once_with()
     session.commit.assert_not_called()
+
+
+def test_envia_confirmacao_explicita_ao_service(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cliente = criar_modelo()
+    criar = MagicMock(return_value=cliente)
+    monkeypatch.setattr(api_clientes, "criar_cliente_service", criar)
+    payload = payload_valido() | {"confirmar_duplicidade": True}
+
+    resposta = client.post("/api/clientes", json=payload)
+
+    assert resposta.status_code == 201
+    dados_recebidos = criar.call_args.args[1]
+    assert dados_recebidos.confirmar_duplicidade is True
+    session.commit.assert_called_once_with()

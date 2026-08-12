@@ -25,7 +25,10 @@ def criar_payload() -> ClienteCreate:
 
 
 def criar_modelo() -> Client:
-    return Client(id=uuid.uuid4(), **criar_payload().model_dump())
+    return Client(
+        id=uuid.uuid4(),
+        **criar_payload().model_dump(exclude={"confirmar_duplicidade"}),
+    )
 
 
 def test_criar_cliente_usa_sessao_recebida(
@@ -59,6 +62,24 @@ def test_criar_cliente_rejeita_possivel_duplicidade(
 
     with pytest.raises(ClienteDuplicado, match="mesmo nome"):
         criar_cliente_service(session, payload)
+
+
+def test_criar_cliente_confirmado_aceita_possivel_duplicidade(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = MagicMock(spec=Session)
+    payload = criar_payload().model_copy(update={"confirmar_duplicidade": True})
+    cliente = criar_modelo()
+    buscar = MagicMock(return_value=criar_modelo())
+    criar = MagicMock(return_value=cliente)
+    monkeypatch.setattr(cliente_service, "buscar_possivel_duplicidade", buscar)
+    monkeypatch.setattr(cliente_service, "criar_cliente", criar)
+
+    resultado = criar_cliente_service(session, payload)
+
+    assert resultado is cliente
+    buscar.assert_called_once_with(session, payload)
+    criar.assert_called_once_with(session, payload)
 
 
 def test_listar_clientes_retorna_pagina_com_cursor_serializado(
