@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.agendamento import Agendamento
     from app.models.medico import Medico
 
 
@@ -43,3 +44,4 @@ class Horario(Base):
         default=True,
         server_default=text("true"),
     )
+    agendamentos: Mapped[list["Agendamento"]] = relationship(back_populates="horario")
