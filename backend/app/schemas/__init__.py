@@ -1,3 +1,4 @@
+from app.schemas.agendamento import AgendamentoCreate, AgendamentoResponse
 from app.schemas.especialidade import (
     EspecialidadeCreate,
     EspecialidadePage,
@@ -13,6 +14,8 @@ from app.schemas.horario import (
 from app.schemas.medico import MedicoCreate, MedicoPage, MedicoResponse
 
 __all__ = [
+    "AgendamentoCreate",
+    "AgendamentoResponse",
     "DiaSemana",
     "EspecialidadeCreate",
     "EspecialidadePage",
