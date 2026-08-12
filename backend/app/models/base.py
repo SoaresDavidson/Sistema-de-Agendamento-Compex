@@ -25,4 +25,6 @@ class TimestampedBase(UUIDBase):
 
     __abstract__ = True
 
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=text("now()"))
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, server_default=text("now()")
+    )

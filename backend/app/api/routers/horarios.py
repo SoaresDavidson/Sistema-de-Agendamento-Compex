@@ -1,10 +1,10 @@
 import uuid
-from typing import Annotated, NoReturn
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
+from app.api.routers.api_errors import reverter_transacao_e_lancar_erro_http
 from app.database import get_db
 from app.models.horario import Horario
 from app.schemas.horario import (
@@ -24,7 +24,6 @@ from app.services.horario import (
     cadastrar_horarios_em_lote,
     desativar_horario,
 )
-from backend.app.api.routers.api_errors import reverter_transacao_e_lancar_erro_http
 
 router = APIRouter(prefix="/horarios", tags=["horarios"])
 
@@ -119,5 +118,3 @@ def criar_horarios_em_lote(
     except Exception:
         session.rollback()
         raise
-
-

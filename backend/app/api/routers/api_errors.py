@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
+
 def reverter_transacao_e_lancar_erro_http(
     session: Session,
     status_code: int,
