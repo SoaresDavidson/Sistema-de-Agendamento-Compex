@@ -39,6 +39,16 @@ def test_email_e_opcional() -> None:
     assert cliente.email is None
 
 
+@pytest.mark.parametrize("email", [None, "", "   "])
+def test_aceita_email_vazio(email: object) -> None:
+    payload = payload_valido()
+    payload["email"] = email
+
+    cliente = ClienteCreate.model_validate(payload)
+
+    assert cliente.email is None
+
+
 def test_remove_espacos_externos_do_nome() -> None:
     payload = payload_valido()
     payload["nome"] = "  Ana Silva  "
@@ -52,6 +62,24 @@ def test_remove_espacos_externos_do_nome() -> None:
 def test_rejeita_nome_invalido(nome: str) -> None:
     payload = payload_valido()
     payload["nome"] = nome
+
+    with pytest.raises(ValidationError):
+        ClienteCreate.model_validate(payload)
+
+
+@pytest.mark.parametrize("telefone", ["", "   "])
+def test_rejeita_telefone_vazio(telefone: str) -> None:
+    payload = payload_valido()
+    payload["telefone"] = telefone
+
+    with pytest.raises(ValidationError):
+        ClienteCreate.model_validate(payload)
+
+
+@pytest.mark.parametrize("data_nascimento", [None, "", "   "])
+def test_rejeita_data_nascimento_vazia(data_nascimento: object) -> None:
+    payload = payload_valido()
+    payload["data_nascimento"] = data_nascimento
 
     with pytest.raises(ValidationError):
         ClienteCreate.model_validate(payload)

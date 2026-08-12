@@ -74,7 +74,5 @@ def test_associacao_possui_foreign_keys_com_cascade() -> None:
 
     assert foreign_keys["medico_id"].target_fullname == "medicos.id"
     assert foreign_keys["medico_id"].ondelete == "CASCADE"
-    assert (
-        foreign_keys["especialidade_id"].target_fullname == "especialidades.id"
-    )
+    assert foreign_keys["especialidade_id"].target_fullname == "especialidades.id"
     assert foreign_keys["especialidade_id"].ondelete == "CASCADE"
