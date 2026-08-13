@@ -14,6 +14,7 @@ from app.schemas.horario import (
     HorariosLoteResponse,
 )
 from app.services.horario import (
+    HorarioComAgendamentoAtivoError,
     HorarioConflitanteError,
     HorarioJaInativoError,
     HorarioNaoEncontradoError,
@@ -47,6 +48,11 @@ def desativar(horario_id: uuid.UUID, session: SessionDep) -> Horario:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Horário já está inativo",
+        ) from None
+    except HorarioComAgendamentoAtivoError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Horário possui agendamento ativo. Cancele o agendamento antes de desativar.",
         ) from None
     session.commit()
     return horario

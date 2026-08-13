@@ -55,6 +55,10 @@ class HorarioJaInativoError(Exception):
     """Indica que o horário já está inativo."""
 
 
+class HorarioComAgendamentoAtivoError(Exception):
+    """Indica que o horário possui agendamento ativo e não pode ser desativado."""
+
+
 def horario_esta_disponivel(
     horario: Horario,
     agora: datetime | None = None,
@@ -227,6 +231,12 @@ def desativar_horario(session: Session, horario_id: uuid.UUID) -> Horario:
         raise HorarioNaoEncontradoError(horario_id)
     if not horario.ativo:
         raise HorarioJaInativoError(horario_id)
+    possui_agendamento_ativo = any(
+        agendamento.status == StatusAgendamento.AGENDADO
+        for agendamento in horario.agendamentos
+    )
+    if possui_agendamento_ativo:
+        raise HorarioComAgendamentoAtivoError(horario_id)
     horario.ativo = False
     session.flush()
     return horario
