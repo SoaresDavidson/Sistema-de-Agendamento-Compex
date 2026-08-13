@@ -10,7 +10,7 @@ from app.api.routers import medicos as api_medicos
 from app.database import get_db
 from app.models.medico import Medico
 from app.schemas.medico import MedicoPage
-from app.services.medico import MedicoSemEspecialidade
+from app.services.medico import EspecialidadeInexistente, MedicoSemEspecialidade
 from main import app
 
 
@@ -140,3 +140,27 @@ def test_rejeita_filtros_uuid_invalidos(client: TestClient) -> None:
     resposta = client.get("/api/medicos?especialidade_id=uuid-invalido")
 
     assert resposta.status_code == 422
+    
+def test_rejeita_especialidade_inexistente(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    especialidade_id = uuid.uuid4()
+
+    monkeypatch.setattr(
+        api_medicos,
+        "cadastrar_medico_service",
+        MagicMock(side_effect=EspecialidadeInexistente()),
+    )
+
+    resposta = client.post(
+        "/api/medicos",
+        json={
+            "nome": "Dra. Mariana Alves",
+            "especialidades_id": [str(especialidade_id)],
+        },
+    )
+
+    assert resposta.status_code == 404
+    session.rollback.assert_called_once_with()

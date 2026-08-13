@@ -12,12 +12,17 @@ class MedicoSemEspecialidade(Exception):
 class MedicoSemNome(Exception):
     """Tentativa de cadastro de médico sem nome"""
 
+class EspecialidadeInexistente(Exception):
+    """Tentativa de cadastro de médico com especialidade que não está no banco"""
+
 def cadastrar_medico_service(session: Session, payload: MedicoCreate):
     if not payload.especialidades_id:
         raise MedicoSemEspecialidade
 
-
-    return criar_medico(session, payload)
+    medico = criar_medico(session, payload)
+    if medico is None:
+        raise EspecialidadeInexistente
+    return medico 
 
 def listar_medicos_service(
     session: Session,

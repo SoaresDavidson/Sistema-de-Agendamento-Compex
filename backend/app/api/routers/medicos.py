@@ -9,6 +9,7 @@ from app.api.routers.api_errors import reverter_transacao_e_lancar_erro_http
 from app.database import get_db
 from app.schemas.medico import MedicoCreate, MedicoPage, MedicoResponse
 from app.services.medico import (
+    EspecialidadeInexistente,
     MedicoSemEspecialidade,
     cadastrar_medico_service,
     listar_medicos_service,
@@ -32,6 +33,12 @@ def cadastrar_medico(session: SessionDep, payload: MedicoCreate) -> MedicoRespon
         reverter_transacao_e_lancar_erro_http(
             session,
             status.HTTP_422_UNPROCESSABLE_CONTENT,
+            erro,
+        )
+    except EspecialidadeInexistente as erro:
+        reverter_transacao_e_lancar_erro_http(
+            session,
+            status.HTTP_404_NOT_FOUND,
             erro,
         )
 
