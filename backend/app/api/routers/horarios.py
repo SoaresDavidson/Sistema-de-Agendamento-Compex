@@ -9,6 +9,8 @@ from app.database import get_db
 from app.models.horario import Horario
 from app.schemas.horario import (
     HorarioCreate,
+    HorarioDisponivelFiltros,
+    HorarioDisponivelResponse,
     HorarioLoteCreate,
     HorarioResponse,
     HorariosLoteResponse,
@@ -23,12 +25,26 @@ from app.services.horario import (
     IntervaloHorarioInvalidoError,
     cadastrar_horario_individual,
     cadastrar_horarios_em_lote,
+    consultar_horarios_disponiveis,
     desativar_horario,
 )
 
 router = APIRouter(prefix="/horarios", tags=["horarios"])
 
 SessionDep = Annotated[Session, Depends(get_db)]
+HorarioDisponivelFiltrosDep = Annotated[HorarioDisponivelFiltros, Depends()]
+
+
+@router.get(
+    "/disponiveis",
+    response_model=list[HorarioDisponivelResponse],
+    status_code=status.HTTP_200_OK,
+)
+def listar_horarios_disponiveis(
+    filtros: HorarioDisponivelFiltrosDep,
+    session: SessionDep,
+) -> list[Horario]:
+    return consultar_horarios_disponiveis(session, filtros)
 
 
 @router.patch(
