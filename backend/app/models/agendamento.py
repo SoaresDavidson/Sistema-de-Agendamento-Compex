@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Uuid, text
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -20,6 +20,14 @@ class StatusAgendamento(StrEnum):
 
 class Agendamento(Base):
     __tablename__ = "agendamentos"
+    __table_args__ = (
+        Index(
+            "uq_agendamentos_horario_agendado",
+            "horario_id",
+            unique=True,
+            postgresql_where=text("status = 'AGENDADO'"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True),

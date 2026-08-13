@@ -2,10 +2,12 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock
 
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session
 
 from app.models.horario import Horario
 from app.repositories.horario import (
+    buscar_horario_para_agendamento,
     buscar_horario_por_id,
     criar_horario,
     listar_horarios,
@@ -48,6 +50,25 @@ def test_buscar_horario_por_id_utiliza_chave_primaria() -> None:
 
     assert horario is horario_esperado
     session.get.assert_called_once_with(Horario, horario_id)
+
+
+def test_buscar_horario_para_agendamento_bloqueia_e_carrega_agendamentos() -> None:
+    session = MagicMock(spec=Session)
+    horario_id = uuid.uuid4()
+    horario_esperado = MagicMock(spec=Horario)
+    session.scalar.return_value = horario_esperado
+
+    horario = buscar_horario_para_agendamento(session, horario_id)
+
+    assert horario is horario_esperado
+    statement = session.scalar.call_args.args[0]
+    consulta_postgres = str(statement.compile(dialect=postgresql.dialect()))
+    parametros = statement.compile().params
+
+    assert "WHERE horarios.id =" in consulta_postgres
+    assert "FOR UPDATE" in consulta_postgres
+    assert horario_id in parametros.values()
+    assert statement._with_options
 
 
 def test_listar_horarios_retorna_resultado_da_consulta() -> None:

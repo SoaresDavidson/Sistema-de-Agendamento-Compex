@@ -78,9 +78,7 @@ def criar_horario_para_disponibilidade(
     "horario",
     [
         criar_horario_para_disponibilidade(ativo=False),
-        criar_horario_para_disponibilidade(
-            inicio=datetime(2030, 1, 1, tzinfo=UTC)
-        ),
+        criar_horario_para_disponibilidade(inicio=datetime(2030, 1, 1, tzinfo=UTC)),
         criar_horario_para_disponibilidade(
             status_agendamento=StatusAgendamento.AGENDADO
         ),
@@ -104,9 +102,7 @@ def test_horario_indisponivel_quando_inativo_ocorrido_ou_agendado(
 def test_horario_ativo_futuro_sem_agendamento_ativo_esta_disponivel(
     status_agendamento: StatusAgendamento | None,
 ) -> None:
-    horario = criar_horario_para_disponibilidade(
-        status_agendamento=status_agendamento
-    )
+    horario = criar_horario_para_disponibilidade(status_agendamento=status_agendamento)
 
     assert horario_esta_disponivel(
         horario,

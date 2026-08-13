@@ -1,3 +1,9 @@
+from app.services.agendamento import (
+    ClienteNaoEncontradoError,
+    HorarioIndisponivelError,
+    HorarioNaoEncontradoParaAgendamentoError,
+    realizar_agendamento,
+)
 from app.services.horario import (
     HorarioConflitanteError,
     HorarioNoPassadoError,
@@ -11,7 +17,10 @@ from app.services.horario import (
 )
 
 __all__ = [
+    "ClienteNaoEncontradoError",
     "HorarioConflitanteError",
+    "HorarioIndisponivelError",
+    "HorarioNaoEncontradoParaAgendamentoError",
     "HorarioNoPassadoError",
     "HorariosLoteConflitantesError",
     "IntervaloHorarioInvalidoError",
@@ -20,4 +29,5 @@ __all__ = [
     "consultar_horarios_disponiveis",
     "gerar_horarios_do_lote",
     "horario_esta_disponivel",
+    "realizar_agendamento",
 ]

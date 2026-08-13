@@ -47,6 +47,18 @@ def test_status_possui_valores_persistidos_e_padrao_agendado() -> None:
     assert "CONCLUIDO" not in status.type.enums
 
 
+def test_indice_unico_restringe_apenas_agendamentos_ativos() -> None:
+    indice = next(
+        indice
+        for indice in Agendamento.__table__.indexes
+        if indice.name == "uq_agendamentos_horario_agendado"
+    )
+
+    assert indice.unique is True
+    assert [expressao.name for expressao in indice.expressions] == ["horario_id"]
+    assert str(indice.dialect_options["postgresql"]["where"]) == ("status = 'AGENDADO'")
+
+
 def test_criado_em_e_obrigatorio_e_possui_fuso_horario() -> None:
     criado_em = Agendamento.__table__.columns.criado_em
 
