@@ -1,12 +1,16 @@
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
+from app.models.agendamento import StatusAgendamento
+from app.models.cliente import Client
 from app.models.horario import Horario
+from app.repositories.agendamento import criar_agendamento
 from app.repositories.horario import buscar_horario_por_id
+from app.schemas.agendamento import AgendamentoCreate
 
 pytestmark = pytest.mark.integration
 
@@ -75,6 +79,87 @@ def test_desativar_sucesso_retorna_horario_com_ativo_false(
 ) -> None:
     api, session, _medico_id = client
 
+    resposta = api.patch(f"/api/horarios/{horario_ativo.id}/desativar")
+
+    assert resposta.status_code == 200
+    body = resposta.json()
+    assert body["id"] == str(horario_ativo.id)
+    assert body["ativo"] is False
+
+    horario_reconsultado = buscar_horario_por_id(session, horario_ativo.id)
+    assert horario_reconsultado is not None
+    assert horario_reconsultado.ativo is False
+
+
+def test_desativar_retorna_409_quando_horario_tem_agendamento_ativo(
+    client: tuple[TestClient, Session, uuid.UUID],
+    horario_ativo: Horario,
+) -> None:
+    api, session, _medico_id = client
+
+    # Cria cliente
+    cliente = Client(
+        nome="Cliente Teste",
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=date(1990, 1, 1),
+    )
+    session.add(cliente)
+    session.flush()
+
+    # Cria agendamento AGENDADO vinculado ao horário
+    _agendamento = criar_agendamento(
+        session,
+        AgendamentoCreate(
+            cliente_id=cliente.id,
+            horario_id=horario_ativo.id,
+        ),
+    )
+    session.commit()
+
+    # Tenta desativar o horário
+    resposta = api.patch(f"/api/horarios/{horario_ativo.id}/desativar")
+
+    assert resposta.status_code == 409
+    assert (
+        resposta.json()["detail"]
+        == "Horário possui agendamento ativo. Cancele o agendamento antes de desativar."
+    )
+
+    # Confirma que o horário não foi desativado
+    horario_reconsultado = buscar_horario_por_id(session, horario_ativo.id)
+    assert horario_reconsultado is not None
+    assert horario_reconsultado.ativo is True
+
+
+def test_desativar_sucesso_quando_horario_so_tem_agendamento_cancelado(
+    client: tuple[TestClient, Session, uuid.UUID],
+    horario_ativo: Horario,
+) -> None:
+    api, session, _medico_id = client
+
+    # Cria cliente
+    cliente = Client(
+        nome="Cliente Teste",
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=date(1990, 1, 1),
+    )
+    session.add(cliente)
+    session.flush()
+
+    # Cria agendamento CANCELADO vinculado ao horário
+    _agendamento = criar_agendamento(
+        session,
+        AgendamentoCreate(
+            cliente_id=cliente.id,
+            horario_id=horario_ativo.id,
+        ),
+    )
+    _agendamento.status = StatusAgendamento.CANCELADO
+    session.commit()
+
+    # Desativa o horário — deve funcionar porque o agendamento não está AGENDADO
     resposta = api.patch(f"/api/horarios/{horario_ativo.id}/desativar")
 
     assert resposta.status_code == 200
