@@ -1,10 +1,10 @@
 import uuid
-from typing import Annotated, NoReturn
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
+from app.api.routers.api_errors import reverter_transacao_e_lancar_erro_http
 from app.database import get_db
 from app.models.horario import Horario
 from app.schemas.horario import (
@@ -66,13 +66,13 @@ def criar_horario(
         session.commit()
         return HorarioResponse.model_validate(horario)
     except (IntervaloHorarioInvalidoError, HorarioNoPassadoError) as erro:
-        _reverter_transacao_e_lancar_erro_http(
+        reverter_transacao_e_lancar_erro_http(
             session,
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             erro,
         )
     except HorarioConflitanteError as erro:
-        _reverter_transacao_e_lancar_erro_http(
+        reverter_transacao_e_lancar_erro_http(
             session,
             status.HTTP_409_CONFLICT,
             erro,
@@ -100,13 +100,13 @@ def criar_horarios_em_lote(
             total_criados=len(horarios),
         )
     except (IntervaloHorarioInvalidoError, HorarioNoPassadoError) as erro:
-        _reverter_transacao_e_lancar_erro_http(
+        reverter_transacao_e_lancar_erro_http(
             session,
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             erro,
         )
     except HorariosLoteConflitantesError as erro:
-        _reverter_transacao_e_lancar_erro_http(
+        reverter_transacao_e_lancar_erro_http(
             session,
             status.HTTP_409_CONFLICT,
             erro,
@@ -118,20 +118,3 @@ def criar_horarios_em_lote(
     except Exception:
         session.rollback()
         raise
-
-
-def _reverter_transacao_e_lancar_erro_http(
-    session: Session,
-    status_code: int,
-    erro: Exception,
-    conflitos: dict[str, object] | None = None,
-) -> NoReturn:
-    session.rollback()
-    detalhe: dict[str, object] = {"mensagem": str(erro)}
-    if conflitos:
-        detalhe.update(conflitos)
-
-    raise HTTPException(
-        status_code=status_code,
-        detail=jsonable_encoder(detalhe),
-    ) from erro

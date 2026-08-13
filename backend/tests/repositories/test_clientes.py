@@ -50,6 +50,17 @@ def test_criar_cliente_adiciona_e_executa_flush() -> None:
     session.commit.assert_not_called()
 
 
+def test_criar_cliente_nao_persiste_confirmacao_de_duplicidade() -> None:
+    session = MagicMock(spec=Session)
+    payload = criar_payload_valido().model_copy(
+        update={"confirmar_duplicidade": True}
+    )
+
+    cliente = criar_cliente(session, payload)
+
+    assert "confirmar_duplicidade" not in cliente.__dict__
+
+
 @pytest.mark.parametrize("encontrado", [True, False])
 def test_buscar_cliente_por_id_utiliza_chave_primaria(encontrado: bool) -> None:
     session = MagicMock(spec=Session)
@@ -77,7 +88,7 @@ def test_buscar_possivel_duplicidade_por_nome_e_nascimento(
     assert cliente is cliente_esperado
     statement = session.scalar.call_args.args[0]
     parametros = statement.compile().params.values()
-    assert payload.nome in parametros
+    assert payload.nome.lower() in parametros
     assert payload.data_nascimento in parametros
 
 

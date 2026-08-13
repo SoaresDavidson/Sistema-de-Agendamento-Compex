@@ -1,7 +1,7 @@
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.cliente import Client
@@ -12,7 +12,7 @@ _MAX_LIMIT = 100
 
 
 def criar_cliente(session: Session, payload: ClienteCreate) -> Client:
-    cliente = Client(**payload.model_dump())
+    cliente = Client(**payload.model_dump(exclude={"confirmar_duplicidade"}))
     session.add(cliente)
     session.flush()
     return cliente
@@ -29,7 +29,7 @@ def buscar_possivel_duplicidade(
     return session.scalar(
         select(Client)
         .where(
-            Client.nome == payload.nome,
+            func.lower(Client.nome) == payload.nome.lower(),
             Client.data_nascimento == payload.data_nascimento,
         )
         .limit(1)

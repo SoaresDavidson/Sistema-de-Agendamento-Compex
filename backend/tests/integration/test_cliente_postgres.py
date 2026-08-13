@@ -16,6 +16,7 @@ from app.repositories.clientes import (
     listar_clientes,
 )
 from app.schemas.clientes import ClienteCreate
+from app.services.cliente import ClienteDuplicado, criar_cliente_service
 
 pytestmark = pytest.mark.integration
 
@@ -53,12 +54,16 @@ def banco_postgres_clientes() -> Generator[Session]:
 def criar_payload(
     *,
     email: str | None = None,
+    nome: str = "Ana Silva",
+    data_nascimento: date = date(1990, 5, 10),
+    confirmar_duplicidade: bool = False,
 ) -> ClienteCreate:
     return ClienteCreate(
-        nome="Ana Silva",
+        nome=nome,
         telefone="85999999999",
         email=email,
-        data_nascimento=date(1990, 5, 10),
+        data_nascimento=data_nascimento,
+        confirmar_duplicidade=confirmar_duplicidade,
     )
 
 
@@ -98,6 +103,57 @@ def test_email_opcional_e_duplicidade_nao_impede_cadastro(
     assert segundo.email is None
     assert duplicidade is not None
     assert duplicidade.id in {primeiro.id, segundo.id}
+
+
+def test_service_exige_confirmacao_antes_de_persistir_duplicidade(
+    banco_postgres_clientes: Session,
+) -> None:
+    session = banco_postgres_clientes
+    primeiro = criar_cliente_service(session, criar_payload())
+    session.flush()
+
+    with pytest.raises(ClienteDuplicado):
+        criar_cliente_service(session, criar_payload())
+
+    quantidade_antes = session.scalar(select(func.count()).select_from(Client))
+    segundo = criar_cliente_service(
+        session,
+        criar_payload(confirmar_duplicidade=True),
+    )
+    session.flush()
+    quantidade_depois = session.scalar(select(func.count()).select_from(Client))
+
+    assert quantidade_antes == 1
+    assert quantidade_depois == 2
+    assert segundo.id != primeiro.id
+
+
+def test_duplicidade_ignora_caixa_e_normaliza_espacos_do_nome(
+    banco_postgres_clientes: Session,
+) -> None:
+    session = banco_postgres_clientes
+    criar_cliente(session, criar_payload(nome="Ana Silva"))
+
+    duplicidade = buscar_possivel_duplicidade(
+        session,
+        criar_payload(nome="  ANA   SILVA  "),
+    )
+
+    assert duplicidade is not None
+
+
+def test_mesmo_nome_com_data_diferente_nao_e_duplicidade(
+    banco_postgres_clientes: Session,
+) -> None:
+    session = banco_postgres_clientes
+    criar_cliente(session, criar_payload())
+
+    duplicidade = buscar_possivel_duplicidade(
+        session,
+        criar_payload(data_nascimento=date(1991, 5, 10)),
+    )
+
+    assert duplicidade is None
 
 
 @pytest.mark.parametrize("campo", ["nome", "telefone", "data_nascimento"])
