@@ -11,6 +11,7 @@ from app.repositories.agendamento import (
     buscar_agendamento_por_id,
     criar_agendamento,
 )
+from app.repositories.horario import buscar_horario_para_agendamento
 from app.schemas.agendamento import AgendamentoCreate
 
 pytestmark = pytest.mark.integration
@@ -49,7 +50,7 @@ def test_cria_e_consulta_agendamento_com_relacionamentos_no_postgres(
 
     agendamento = buscar_agendamento_por_id(session, agendamento_id)
     cliente = session.get(Client, cliente_id)
-    horario = session.get(Horario, horario_id)
+    horario = buscar_horario_para_agendamento(session, horario_id)
 
     assert agendamento is not None
     assert cliente is not None

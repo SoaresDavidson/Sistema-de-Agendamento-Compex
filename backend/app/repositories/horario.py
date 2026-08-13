@@ -24,6 +24,19 @@ def buscar_horario_por_id(
     return session.get(Horario, horario_id)
 
 
+def buscar_horario_para_agendamento(
+    session: Session,
+    horario_id: uuid.UUID,
+) -> Horario | None:
+    statement = (
+        select(Horario)
+        .where(Horario.id == horario_id)
+        .options(selectinload(Horario.agendamentos))
+        .with_for_update()
+    )
+    return session.scalar(statement)
+
+
 def listar_horarios(session: Session) -> Sequence[Horario]:
     statement = select(Horario).order_by(Horario.inicio, Horario.id)
     return session.scalars(statement).all()
