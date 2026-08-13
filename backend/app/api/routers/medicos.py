@@ -1,4 +1,3 @@
-
 import uuid
 from typing import Annotated
 
@@ -18,6 +17,7 @@ from app.services.medico import (
 router = APIRouter(prefix="/medicos", tags=["medicos"])
 
 SessionDep = Annotated[Session, Depends(get_db)]
+
 
 @router.post(
     "",
@@ -41,6 +41,7 @@ def cadastrar_medico(session: SessionDep, payload: MedicoCreate) -> MedicoRespon
             status.HTTP_404_NOT_FOUND,
             erro,
         )
+
 
 @router.get("", response_model=MedicoPage)
 def listar_medicos(

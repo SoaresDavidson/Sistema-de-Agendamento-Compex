@@ -2,6 +2,7 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
+from app.models.especialidade import Especialidade
 from sqlalchemy.orm import Session
 
 from app.models.medico import Medico
@@ -22,7 +23,15 @@ def criar_payload() -> MedicoCreate:
 
 
 def criar_medico() -> Medico:
-    return Medico(id=uuid.uuid4(), nome="Dra. Mariana Alves")
+    especialidade = Especialidade(
+        id=uuid.uuid4(),
+        nome="Cardiologia",
+    )
+    return Medico(
+        id=uuid.uuid4(),
+        nome="Dra. Mariana Alves",
+        especialidades=[especialidade],
+    )
 
 
 def test_cadastrar_medico_delega_para_repository(

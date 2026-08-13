@@ -15,9 +15,7 @@ _MAX_LIMIT = 100
 def criar_medico(session: Session, payload: MedicoCreate) -> Medico | None:
     especialidades = list(
         session.scalars(
-            select(Especialidade).where(
-                Especialidade.id.in_(payload.especialidades_id)
-            )
+            select(Especialidade).where(Especialidade.id.in_(payload.especialidades_id))
         ).all()
     )
 
@@ -44,9 +42,8 @@ def listar_medico(
         statement = statement.where(Medico.nome.ilike(f"%{nome.strip()}%"))
 
     if especialidade_id is not None:
-        statement = (
-            statement.join(Medico.especialidades)
-            .where(Especialidade.id == especialidade_id)
+        statement = statement.join(Medico.especialidades).where(
+            Especialidade.id == especialidade_id
         )
 
     if cursor_id is not None:

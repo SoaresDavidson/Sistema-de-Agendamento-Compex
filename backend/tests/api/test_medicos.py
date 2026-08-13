@@ -140,7 +140,8 @@ def test_rejeita_filtros_uuid_invalidos(client: TestClient) -> None:
     resposta = client.get("/api/medicos?especialidade_id=uuid-invalido")
 
     assert resposta.status_code == 422
-    
+
+
 def test_rejeita_especialidade_inexistente(
     client: TestClient,
     session: MagicMock,
