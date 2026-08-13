@@ -52,9 +52,7 @@ def test_criar_cliente_adiciona_e_executa_flush() -> None:
 
 def test_criar_cliente_nao_persiste_confirmacao_de_duplicidade() -> None:
     session = MagicMock(spec=Session)
-    payload = criar_payload_valido().model_copy(
-        update={"confirmar_duplicidade": True}
-    )
+    payload = criar_payload_valido().model_copy(update={"confirmar_duplicidade": True})
 
     cliente = criar_cliente(session, payload)
 

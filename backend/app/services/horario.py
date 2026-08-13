@@ -69,7 +69,9 @@ def horario_esta_disponivel(
         for agendamento in horario.agendamentos
     )
 
-    return horario.ativo and horario.inicio > referencia and not possui_agendamento_ativo
+    return (
+        horario.ativo and horario.inicio > referencia and not possui_agendamento_ativo
+    )
 
 
 def consultar_horarios_disponiveis(
@@ -80,9 +82,7 @@ def consultar_horarios_disponiveis(
     referencia = agora or datetime.now(UTC)
     horarios = listar_horarios_filtrados(session, filtros)
     return [
-        horario
-        for horario in horarios
-        if horario_esta_disponivel(horario, referencia)
+        horario for horario in horarios if horario_esta_disponivel(horario, referencia)
     ]
 
 

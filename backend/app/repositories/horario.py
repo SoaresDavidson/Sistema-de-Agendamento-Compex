@@ -68,9 +68,7 @@ def listar_horarios_filtrados(
 
     if filtros.especialidade_id is not None:
         statement = statement.where(
-            Horario.medico.has(
-                Medico.especialidades.any(id=filtros.especialidade_id)
-            )
+            Horario.medico.has(Medico.especialidades.any(id=filtros.especialidade_id))
         )
 
     return session.scalars(statement).all()

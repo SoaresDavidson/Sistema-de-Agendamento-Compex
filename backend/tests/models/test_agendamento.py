@@ -56,9 +56,7 @@ def test_indice_unico_restringe_apenas_agendamentos_ativos() -> None:
 
     assert indice.unique is True
     assert [expressao.name for expressao in indice.expressions] == ["horario_id"]
-    assert str(indice.dialect_options["postgresql"]["where"]) == (
-        "status = 'AGENDADO'"
-    )
+    assert str(indice.dialect_options["postgresql"]["where"]) == ("status = 'AGENDADO'")
 
 
 def test_criado_em_e_obrigatorio_e_possui_fuso_horario() -> None:
