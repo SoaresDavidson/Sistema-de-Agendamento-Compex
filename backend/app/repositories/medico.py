@@ -13,11 +13,18 @@ _MAX_LIMIT = 100
 
 
 def criar_medico(session: Session, payload: MedicoCreate) -> Medico | None:
-    especialidade = session.get(Especialidade, payload.especialidade_id)
-    if especialidade is None:
+    especialidades = list(
+        session.scalars(
+            select(Especialidade).where(
+                Especialidade.id.in_(payload.especialidades_id)
+            )
+        ).all()
+    )
+
+    if len(especialidades) != len(set(payload.especialidades_id)):
         return None
 
-    medico = Medico(nome=payload.nome, especialidades=[especialidade])
+    medico = Medico(nome=payload.nome, especialidades=especialidades)
     session.add(medico)
     session.flush()
     return medico
@@ -27,9 +34,20 @@ def listar_medico(
     session: Session,
     cursor_id: uuid.UUID | None = None,
     limit: int = _DEFAULT_LIMIT,
+    nome: str | None = None,
+    especialidade_id: uuid.UUID | None = None,
 ) -> tuple[Sequence[Medico], uuid.UUID | None]:
     limit = max(1, min(limit, _MAX_LIMIT))
     statement = select(Medico).order_by(Medico.id)
+
+    if nome:
+        statement = statement.where(Medico.nome.ilike(f"%{nome.strip()}%"))
+
+    if especialidade_id is not None:
+        statement = (
+            statement.join(Medico.especialidades)
+            .where(Especialidade.id == especialidade_id)
+        )
 
     if cursor_id is not None:
         statement = statement.where(Medico.id > cursor_id)

@@ -20,7 +20,7 @@ class MedicoBase(BaseModel):
 
 
 class MedicoCreate(MedicoBase):
-    especialidade_id: uuid.UUID
+    especialidades_id: list[uuid.UUID]
 
 
 class MedicoResponse(MedicoBase):
