@@ -13,7 +13,7 @@ from app.schemas.medico import MedicoCreate
 def criar_payload_valido() -> MedicoCreate:
     return MedicoCreate(
         nome="Dra. Mariana Alves",
-        especialidade_id=uuid.uuid4(),
+        especialidades_id=[uuid.uuid4()],
     )
 
 
@@ -25,17 +25,17 @@ def test_criar_medico_com_especialidade_adiciona_e_executa_flush() -> None:
     session = MagicMock(spec=Session)
     payload = criar_payload_valido()
     especialidade = Especialidade(
-        id=payload.especialidade_id,
+        id=payload.especialidades_id[0],
         nome="Cardiologia",
     )
-    session.get.return_value = especialidade
+    session.scalars.return_value.all.return_value = [especialidade]
 
     medico = criar_medico(session, payload)
 
     assert isinstance(medico, Medico)
     assert medico.nome == payload.nome
     assert medico.especialidades == [especialidade]
-    session.get.assert_called_once_with(Especialidade, payload.especialidade_id)
+    session.scalars.assert_called_once()
     session.add.assert_called_once_with(medico)
     session.flush.assert_called_once_with()
     session.commit.assert_not_called()
@@ -44,12 +44,12 @@ def test_criar_medico_com_especialidade_adiciona_e_executa_flush() -> None:
 def test_criar_medico_retorna_none_quando_especialidade_nao_existe() -> None:
     session = MagicMock(spec=Session)
     payload = criar_payload_valido()
-    session.get.return_value = None
+    session.scalars.return_value.all.return_value = []
 
     medico = criar_medico(session, payload)
 
     assert medico is None
-    session.get.assert_called_once_with(Especialidade, payload.especialidade_id)
+    session.scalars.assert_called_once()
     session.add.assert_not_called()
     session.flush.assert_not_called()
     session.commit.assert_not_called()
