@@ -64,7 +64,7 @@ def test_cria_e_lista_medico_com_especialidade_no_postgres(
         session,
         MedicoCreate(
             nome="Dra. Mariana Alves",
-            especialidade_id=especialidade.id,
+            especialidades_id=[especialidade.id],
         ),
     )
 
@@ -88,7 +88,7 @@ def test_nao_cria_medico_quando_especialidade_nao_existe(
         session,
         MedicoCreate(
             nome="Dra. Mariana Alves",
-            especialidade_id=uuid.uuid4(),
+            especialidades_id=[uuid.uuid4()],
         ),
     )
 

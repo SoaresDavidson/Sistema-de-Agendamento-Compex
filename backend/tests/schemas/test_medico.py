@@ -13,23 +13,26 @@ def test_valida_criacao_de_medico() -> None:
 
     dados = MedicoCreate(
         nome="  Dra. Mariana Alves  ",
-        especialidade_id=especialidade_id,
+        especialidades_id=[especialidade_id],
     )
 
     assert dados.nome == "Dra. Mariana Alves"
-    assert dados.especialidade_id == especialidade_id
+    assert dados.especialidades_id == [especialidade_id]
 
 
 @pytest.mark.parametrize("nome", ["", "   "])
 def test_rejeita_nome_vazio(nome: str) -> None:
     with pytest.raises(ValidationError):
-        MedicoCreate(nome=nome, especialidade_id=uuid.uuid4())
+        MedicoCreate(nome=nome, especialidades_id=[uuid.uuid4()])
 
 
 def test_rejeita_especialidade_invalida() -> None:
     with pytest.raises(ValidationError):
         MedicoCreate.model_validate(
-            {"nome": "Dra. Mariana Alves", "especialidade_id": "invalida"}
+            {
+                "nome": "Dra. Mariana Alves",
+                "especialidades_id": ["invalida"],
+            }
         )
 
 

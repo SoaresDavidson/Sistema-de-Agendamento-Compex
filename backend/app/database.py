@@ -18,5 +18,9 @@ SessionLocal = sessionmaker(
 
 
 def get_db() -> Generator[Session]:
-    with SessionLocal() as session:
-        yield session
+    with Session(engine) as session:
+        try:
+            yield session
+        except Exception:  # garante que em caso de exceção sempre faz rollback
+            session.rollback()
+            raise
