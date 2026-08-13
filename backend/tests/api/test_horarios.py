@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -62,6 +63,99 @@ def dados_lote() -> dict[str, object]:
         "fim_periodo": "10:00:00",
         "duracao_minutos": 60,
     }
+
+
+def criar_horario_disponivel() -> SimpleNamespace:
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        inicio=datetime(2030, 1, 7, 8, tzinfo=UTC),
+        fim=datetime(2030, 1, 7, 9, tzinfo=UTC),
+        medico=SimpleNamespace(id=uuid.uuid4(), nome="Dra. Ana"),
+    )
+
+
+def test_consulta_horarios_disponiveis_sem_filtros(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    horario = criar_horario_disponivel()
+    consultar = MagicMock(return_value=[horario])
+    monkeypatch.setattr(api_horarios, "consultar_horarios_disponiveis", consultar)
+
+    resposta = client.get("/api/horarios/disponiveis")
+
+    assert resposta.status_code == 200
+    assert resposta.json() == [
+        {
+            "id": str(horario.id),
+            "inicio": "2030-01-07T08:00:00Z",
+            "fim": "2030-01-07T09:00:00Z",
+            "medico": {
+                "id": str(horario.medico.id),
+                "nome": "Dra. Ana",
+            },
+        }
+    ]
+    consultar.assert_called_once()
+    sessao_recebida, filtros = consultar.call_args.args
+    assert sessao_recebida is session
+    assert filtros.data is None
+    assert filtros.medico_id is None
+    assert filtros.especialidade_id is None
+    session.commit.assert_not_called()
+    session.rollback.assert_not_called()
+
+
+def test_consulta_horarios_disponiveis_combina_filtros(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    medico_id = uuid.uuid4()
+    especialidade_id = uuid.uuid4()
+    consultar = MagicMock(return_value=[])
+    monkeypatch.setattr(api_horarios, "consultar_horarios_disponiveis", consultar)
+
+    resposta = client.get(
+        "/api/horarios/disponiveis",
+        params={
+            "data": "2030-01-07",
+            "medico_id": str(medico_id),
+            "especialidade_id": str(especialidade_id),
+        },
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json() == []
+    sessao_recebida, filtros = consultar.call_args.args
+    assert sessao_recebida is session
+    assert filtros.data.isoformat() == "2030-01-07"
+    assert filtros.medico_id == medico_id
+    assert filtros.especialidade_id == especialidade_id
+
+
+@pytest.mark.parametrize(
+    "parametros",
+    [
+        {"data": "data-invalida"},
+        {"medico_id": "uuid-invalido"},
+        {"especialidade_id": "uuid-invalido"},
+    ],
+    ids=["data", "medico", "especialidade"],
+)
+def test_consulta_horarios_disponiveis_rejeita_filtros_invalidos(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    parametros: dict[str, str],
+) -> None:
+    consultar = MagicMock()
+    monkeypatch.setattr(api_horarios, "consultar_horarios_disponiveis", consultar)
+
+    resposta = client.get("/api/horarios/disponiveis", params=parametros)
+
+    assert resposta.status_code == 422
+    consultar.assert_not_called()
 
 
 def test_cria_horario_individual(
