@@ -13,6 +13,7 @@ export default function App() {
 					<Route path="agendamentos" element={<AgendamentosPage />} />
 					<Route path="clientes" element={<ClientesPage />} />
 					<Route path="clientes/cadastro" element={<ClientCadastro />} />
+					<Route path="clientes/:id/editar" element={<ClientCadastro />} />
 				</Route>
 			</Routes>
 		</BrowserRouter>
