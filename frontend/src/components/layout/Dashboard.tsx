@@ -8,7 +8,7 @@ export function DashboardLayout() {
 		<div className="app-shell">
 			<DashboardSidebar />
 
-			<div className="min-w-0">
+			<div className="workspace">
 				<DashboardHeader />
 
 				<ToastProvider>
