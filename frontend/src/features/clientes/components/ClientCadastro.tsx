@@ -61,7 +61,7 @@ export function ClientCadastro() {
 			</header>
 
 			<form
-                noValidate
+				noValidate
 				className="table-wrap max-w-3xl space-y-5 p-6"
 				onSubmit={handleSubmit}
 			>
@@ -69,7 +69,13 @@ export function ClientCadastro() {
 					<label htmlFor="client-name">
 						Nome completo <span className="text-destructive">*</span>
 					</label>
-					<input id="client-name" className="input" name="nome" required formNoValidate/>
+					<input
+						id="client-name"
+						className="input"
+						name="nome"
+						required
+						formNoValidate
+					/>
 				</div>
 
 				<div className="grid gap-5 md:grid-cols-2">
@@ -84,7 +90,7 @@ export function ClientCadastro() {
 							type="tel"
 							placeholder="(85) 98841-2030"
 							required
-                            formNoValidate
+							formNoValidate
 						/>
 					</div>
 

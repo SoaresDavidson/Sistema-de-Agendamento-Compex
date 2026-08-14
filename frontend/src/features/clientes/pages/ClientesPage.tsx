@@ -1,12 +1,22 @@
+import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buttonVariants } from "@/components/ui/Button";
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/components/ui/Empty";
+import { ErrorState } from "@/components/ui/Error";
 import { ClienteSkeleton } from "../components/ClienteSkeleton";
 import { ClienteTable } from "../components/ClienteTable";
 import { useListClient } from "../hook/useListClient.hook";
 
 export function ClientesPage() {
-	const { clientes, isLoading, fetchClientes } = useListClient();
+	const { clientes, isLoading, error, fetchClientes } = useListClient();
 	const [hasLoaded, setHasLoaded] = useState(false);
 	const navigate = useNavigate();
 
@@ -46,10 +56,29 @@ export function ClientesPage() {
 
 			{!hasLoaded || isLoading ? (
 				<ClienteSkeleton />
+			) : error ? (
+				<ErrorState message={error} onRetry={() => void fetchClientes()} />
 			) : clientes.length === 0 ? (
-				<p role="status" aria-live="polite">
-					Nenhum cliente encontrado
-				</p>
+				<Empty className="border border-border bg-card py-16">
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<Users aria-hidden="true" />
+						</EmptyMedia>
+						<EmptyTitle>Nenhum cliente cadastrado</EmptyTitle>
+						<EmptyDescription>
+							Cadastre primeiro cliente para começar.
+						</EmptyDescription>
+					</EmptyHeader>
+					<EmptyContent>
+						<button
+							type="button"
+							onClick={() => navigate("/clientes/cadastro")}
+							className={buttonVariants({ variant: "primary" })}
+						>
+							Cadastrar cliente
+						</button>
+					</EmptyContent>
+				</Empty>
 			) : (
 				<ClienteTable clientes={clientes} />
 			)}
