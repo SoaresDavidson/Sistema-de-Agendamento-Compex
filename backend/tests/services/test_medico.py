@@ -2,9 +2,9 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
-from app.models.especialidade import Especialidade
 from sqlalchemy.orm import Session
 
+from app.models.especialidade import Especialidade
 from app.models.medico import Medico
 from app.schemas.medico import MedicoCreate
 from app.services import medico as medico_service

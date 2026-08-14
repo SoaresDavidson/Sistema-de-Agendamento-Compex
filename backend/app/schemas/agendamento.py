@@ -23,6 +23,26 @@ class AgendamentoResponse(AgendamentoBase):
     criado_em: datetime
 
 
+class AgendamentoListagemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    cliente: str
+    medico: str
+    especialidade: str
+    data: str
+    horario: str
+    status: StatusAgendamento
+
+
+class AgendamentoPage(BaseModel):
+    items: list[AgendamentoListagemResponse]
+    page: int
+    size: int
+    total: int
+    totalPages: int
+
+
 class CancelamentoRequest(BaseModel):
     origem: CancelamentoOrigem
     observacao: str | None = None

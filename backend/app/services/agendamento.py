@@ -1,13 +1,22 @@
+import math
 import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
 from app.models.agendamento import Agendamento, CancelamentoOrigem, StatusAgendamento
-from app.repositories.agendamento import buscar_agendamento_por_id, criar_agendamento
+from app.repositories.agendamento import (
+    buscar_agendamento_por_id,
+    criar_agendamento,
+    listar_agendamentos,
+)
 from app.repositories.clientes import buscar_cliente_por_id
 from app.repositories.horario import buscar_horario_para_agendamento
-from app.schemas.agendamento import AgendamentoCreate
+from app.schemas.agendamento import (
+    AgendamentoCreate,
+    AgendamentoListagemResponse,
+    AgendamentoPage,
+)
 from app.services.horario import horario_esta_disponivel
 
 
@@ -77,3 +86,37 @@ def aplicar_cancelamento(
         agendamento.horario.ativo = False
     session.flush()
     return agendamento
+
+
+def listar_agendamentos_service(
+    session: Session,
+    page: int,
+    size: int,
+) -> AgendamentoPage:
+    agendamentos, total = listar_agendamentos(session, page, size)
+
+    total_pages = max(1, math.ceil(total / size))
+    safe_page = max(1, min(page, total_pages))
+
+    items: list[AgendamentoListagemResponse] = []
+    for a in agendamentos:
+        especialidade = a.horario.medico.especialidades[0].nome if a.horario.medico.especialidades else ""
+        items.append(
+            AgendamentoListagemResponse(
+                id=a.id,
+                cliente=a.cliente.nome,
+                medico=a.horario.medico.nome,
+                especialidade=especialidade,
+                data=a.horario.inicio.strftime("%d/%m/%Y"),
+                horario=f"{a.horario.inicio.strftime('%H:%M')}–{a.horario.fim.strftime('%H:%M')}",
+                status=a.status,
+            )
+        )
+
+    return AgendamentoPage(
+        items=items,
+        page=safe_page,
+        size=size,
+        total=total,
+        totalPages=total_pages,
+    )
