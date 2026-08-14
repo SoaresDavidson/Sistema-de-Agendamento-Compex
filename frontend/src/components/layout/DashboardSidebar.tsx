@@ -1,6 +1,5 @@
-import { Users } from "lucide-react";
-import { NavLink } from "react-router-dom";
 import { AgendamentosNavLink } from "@/features/agendamentos/components/AgendamentosNavLink";
+import { ClienteNavLink } from "@/features/clientes/components/ClienteNavLink";
 
 export function DashboardSidebar() {
 	return (
@@ -13,24 +12,7 @@ export function DashboardSidebar() {
 			</div>
 			<nav className="mt-4 grid gap-1">
 				<AgendamentosNavLink />
-				<NavLink
-					to="/clientes"
-					aria-label="Clientes"
-					className={({ isActive }) =>
-						`sidebar-nav-link flex min-h-11 items-center gap-3 rounded-control px-3 text-sm font-semibold ${
-							isActive
-								? "bg-muted text-primary"
-								: "text-muted-foreground hover:bg-background"
-						}`
-					}
-				>
-					<Users
-						aria-hidden="true"
-						className="size-4.5 flex-none"
-						strokeWidth={1.8}
-					/>
-					<span className="sidebar-nav-label">Clientes</span>
-				</NavLink>
+				<ClienteNavLink />
 			</nav>
 			<footer className="sidebar-footer mt-auto border-t border-border px-2 pt-4 text-xs text-muted-foreground">
 				<p>Agendamento clínico</p>
