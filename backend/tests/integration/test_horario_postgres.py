@@ -4,6 +4,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy.orm import Session
 
+from app.models.agendamento import Agendamento
+from app.models.horario import Horario
 from app.models.medico import Medico
 from app.repositories.horario import (
     buscar_horario_por_id,
@@ -19,6 +21,9 @@ def test_cria_e_consulta_horario_no_postgres(
     banco_postgres: tuple[Session, uuid.UUID],
 ) -> None:
     session, medico_id = banco_postgres
+    session.query(Agendamento).delete()
+    session.query(Horario).delete()
+    session.flush()
     inicio = datetime.now(UTC) + timedelta(days=1)
     dados = HorarioCreate(
         medico_id=medico_id,
