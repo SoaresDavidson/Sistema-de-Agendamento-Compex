@@ -11,8 +11,8 @@
     "check": "biome check src",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
-  },
+    "test:run": "vitest run",
+    "generate:api": "curl --fail --silent --show-error http://127.0.0.1:8000/openapi.json --output /tmp/compex-openapi.json && typed-openapi /tmp/compex-openapi.json --output src/api/generated.ts --runtime zod --schemas-only --validation strict --format"  },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "class-variance-authority": "^0.7.1",
@@ -22,7 +22,8 @@
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
     "tailwind-merge": "^3.3.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",
@@ -39,6 +40,7 @@
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
     "jsdom": "^29.1.1",
+    "typed-openapi": "^3.2.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.65.0",
     "vite": "^8.2.0",
