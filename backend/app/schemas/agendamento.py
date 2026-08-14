@@ -1,10 +1,9 @@
 import uuid
 from datetime import datetime
-from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.agendamento import StatusAgendamento
+from app.models.agendamento import CancelamentoOrigem, StatusAgendamento
 
 
 class AgendamentoBase(BaseModel):
@@ -24,11 +23,6 @@ class AgendamentoResponse(AgendamentoBase):
     criado_em: datetime
 
 
-class CancelamentoOrigem(StrEnum):
-    CLIENTE = "CLIENTE"
-    MEDICO = "MEDICO"
-
-
 class CancelamentoRequest(BaseModel):
     origem: CancelamentoOrigem
     observacao: str | None = None
@@ -39,3 +33,6 @@ class CancelamentoResponse(BaseModel):
 
     id: uuid.UUID
     status: StatusAgendamento
+    cancelado_por: CancelamentoOrigem | None = None
+    cancelado_em: datetime | None = None
+    observacao_cancelamento: str | None = None

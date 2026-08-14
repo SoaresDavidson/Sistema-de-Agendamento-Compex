@@ -5,10 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.agendamento import Agendamento
 from app.schemas.agendamento import CancelamentoRequest, CancelamentoResponse
 from app.services.agendamento import (
     AgendamentoJaCanceladoError,
     AgendamentoNaoEncontradoError,
+    aplicar_cancelamento,
     validar_cancelamento,
 )
 
@@ -26,9 +28,12 @@ def cancelar(
     agendamento_id: uuid.UUID,
     dados: CancelamentoRequest,
     session: SessionDep,
-) -> dict:
+) -> Agendamento:
     try:
         agendamento = validar_cancelamento(session, agendamento_id)
+        agendamento = aplicar_cancelamento(
+            session, agendamento, dados.origem, dados.observacao
+        )
     except AgendamentoNaoEncontradoError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -40,4 +45,5 @@ def cancelar(
             detail="Agendamento já está cancelado",
         ) from None
 
+    session.commit()
     return agendamento
