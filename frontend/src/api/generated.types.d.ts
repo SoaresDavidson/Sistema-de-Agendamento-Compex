@@ -1,6 +1,9 @@
 export namespace Schemas {
 	// <Schemas>
-	export type AgendamentoCreate = { cliente_id: string; horario_id: string };
+	export type AgendamentoCreate = {
+		cliente_id: string;
+		horario_id: string;
+	};
 	export type StatusAgendamento = "AGENDADO" | "CANCELADO";
 	export type AgendamentoResponse = {
 		cliente_id: string;
@@ -48,7 +51,10 @@ export namespace Schemas {
 		| "SABADO"
 		| "DOMINGO";
 	export type EspecialidadeCreate = { nome: string };
-	export type EspecialidadeResponse = { nome: string; id: string };
+	export type EspecialidadeResponse = {
+		nome: string;
+		id: string;
+	};
 	export type EspecialidadePage = {
 		items: Array<EspecialidadeResponse>;
 		next_cursor: string | null;
@@ -60,13 +66,18 @@ export namespace Schemas {
 		input?: unknown;
 		ctx?: Record<string, unknown>;
 	};
-	export type HTTPValidationError = Partial<{ detail: Array<ValidationError> }>;
+	export type HTTPValidationError = Partial<{
+		detail: Array<ValidationError>;
+	}>;
 	export type HorarioCreate = {
 		medico_id: string;
 		inicio: string;
 		fim: string;
 	};
-	export type MedicoHorarioDisponivelResponse = { id: string; nome: string };
+	export type MedicoHorarioDisponivelResponse = {
+		id: string;
+		nome: string;
+	};
 	export type HorarioDisponivelResponse = {
 		id: string;
 		inicio: string;
@@ -93,7 +104,10 @@ export namespace Schemas {
 		horarios: Array<HorarioResponse>;
 		total_criados: number;
 	};
-	export type MedicoCreate = { nome: string; especialidades_id: Array<string> };
+	export type MedicoCreate = {
+		nome: string;
+		especialidades_id: Array<string>;
+	};
 	export type MedicoResponse = {
 		nome: string;
 		id: string;
@@ -158,9 +172,15 @@ export namespace Endpoints {
 		requestFormat: "json";
 		responseFormat: "json";
 		parameters: {
-			query?: Partial<{ cursor: string | null; limite: number }>;
+			query?: Partial<{
+				cursor: string | null;
+				limite: number;
+			}>;
 		};
-		responses: { 200: Schemas.ClientePage; 422: Schemas.HTTPValidationError };
+		responses: {
+			200: Schemas.ClientePage;
+			422: Schemas.HTTPValidationError;
+		};
 	};
 	export type post_Criar_especialidade_api_especialidades_post = {
 		method: "POST";
@@ -181,7 +201,10 @@ export namespace Endpoints {
 		requestFormat: "json";
 		responseFormat: "json";
 		parameters: {
-			query?: Partial<{ cursor: string | null; limite: number }>;
+			query?: Partial<{
+				cursor: string | null;
+				limite: number;
+			}>;
 		};
 		responses: {
 			200: Schemas.EspecialidadePage;
@@ -270,7 +293,10 @@ export namespace Endpoints {
 				especialidade_id: string | null;
 			}>;
 		};
-		responses: { 200: Schemas.MedicoPage; 422: Schemas.HTTPValidationError };
+		responses: {
+			200: Schemas.MedicoPage;
+			422: Schemas.HTTPValidationError;
+		};
 	};
 	export type get_Read_root__get = {
 		method: "GET";
