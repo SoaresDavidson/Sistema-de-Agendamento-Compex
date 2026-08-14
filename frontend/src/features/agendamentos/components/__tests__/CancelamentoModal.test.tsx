@@ -17,6 +17,7 @@ const fixture: Appointment = {
 function renderModal(
 	onConfirm: (p: CancelamentoPayload) => void = vi.fn(),
 	onClose: () => void = vi.fn(),
+	props: { submitting?: boolean; error?: string } = {},
 ) {
 	return render(
 		<CancelamentoModal
@@ -24,6 +25,8 @@ function renderModal(
 			agendamento={fixture}
 			onConfirm={onConfirm}
 			onClose={onClose}
+			submitting={props.submitting}
+			error={props.error}
 		/>,
 	);
 }
@@ -153,6 +156,54 @@ describe("CancelamentoModal", () => {
 		expect(onConfirm).toHaveBeenCalledWith({
 			origem: "CLIENTE",
 			observacao: undefined,
+		});
+	});
+
+	describe("estados de submissão e erro", () => {
+		it("desabilita botão Confirmar e mostra 'Cancelando...' durante submitting", () => {
+			renderModal(vi.fn(), vi.fn(), { submitting: true });
+
+			const confirmar = screen.getByRole("button", {
+				name: "Cancelando...",
+			});
+			expect(confirmar).toBeDisabled();
+			expect(
+				screen.queryByRole("button", { name: "Confirmar cancelamento" }),
+			).not.toBeInTheDocument();
+		});
+
+		it("não chama onConfirm se clicar em Confirmar durante submitting", async () => {
+			const user = userEvent.setup();
+			const onConfirm = vi.fn();
+			renderModal(onConfirm, vi.fn(), { submitting: true });
+
+			await user.click(screen.getByRole("button", { name: "Cancelando..." }));
+
+			expect(onConfirm).not.toHaveBeenCalled();
+		});
+
+		it("exibe mensagem de erro sem perder origem e observação", async () => {
+			const user = userEvent.setup();
+			renderModal(vi.fn(), vi.fn(), { error: "Erro de rede" });
+
+			await user.click(screen.getByLabelText("Solicitação do cliente"));
+			await user.type(
+				screen.getByLabelText("Observação opcional"),
+				"Motivo do cancelamento",
+			);
+
+			expect(screen.getByText("Erro de rede")).toBeInTheDocument();
+			expect(screen.getByLabelText("Solicitação do cliente")).toBeChecked();
+			expect(screen.getByLabelText("Observação opcional")).toHaveValue(
+				"Motivo do cancelamento",
+			);
+		});
+
+		it("desabilita botão Manter agendamento durante submitting", async () => {
+			renderModal(vi.fn(), vi.fn(), { submitting: true });
+
+			const manter = screen.getByRole("button", { name: "Manter agendamento" });
+			expect(manter).toBeDisabled();
 		});
 	});
 });

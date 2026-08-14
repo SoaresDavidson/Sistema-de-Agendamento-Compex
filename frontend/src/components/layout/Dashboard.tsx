@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { ToastProvider } from "@/components/ui/Toast";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 
@@ -10,9 +11,11 @@ export function DashboardLayout() {
 			<div className="min-w-0">
 				<DashboardHeader />
 
-				<main className="p-8 font-sans">
-					<Outlet />
-				</main>
+				<ToastProvider>
+					<main className="p-8 font-sans">
+						<Outlet />
+					</main>
+				</ToastProvider>
 			</div>
 		</div>
 	);

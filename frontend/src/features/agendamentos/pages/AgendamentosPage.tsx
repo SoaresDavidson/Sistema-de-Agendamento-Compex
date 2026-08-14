@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/Empty";
 import { ErrorState } from "@/components/ui/Error";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
+import { cancelarAgendamento } from "../api/appointmentsApi";
 import {
 	extractFilterOptions,
 	MOCK_APPOINTMENTS,
@@ -17,6 +19,7 @@ import {
 import type {
 	Appointment,
 	AppointmentFilters,
+	CancelamentoOrigem,
 	CancelamentoPayload,
 } from "../api/types";
 import { AppointmentsFilters } from "../components/AppointmentsFilters";
@@ -58,10 +61,16 @@ export function AgendamentosPage() {
 		);
 	}, [debouncedClientSearch]);
 
-	const { data, loading, error, page, setPage } = useAppointments(1, filters);
+	const { data, loading, error, page, setPage, refresh } = useAppointments(
+		1,
+		filters,
+	);
 	const [alvoCancelamento, setAlvoCancelamento] = useState<Appointment | null>(
 		null,
 	);
+	const [cancelando, setCancelando] = useState(false);
+	const [erroCancelamento, setErroCancelamento] = useState<string | null>(null);
+	const { showToast } = useToast();
 
 	const { medicos, especialidades } = useMemo(
 		() => extractFilterOptions(MOCK_APPOINTMENTS),
@@ -82,13 +91,35 @@ export function AgendamentosPage() {
 		setPage(1);
 	};
 
-	const handleConfirmarCancelamento = (payload: CancelamentoPayload) => {
-		if (alvoCancelamento === null) return;
-		console.debug("[agendamentos] cancelamento stub:", {
-			id: alvoCancelamento.id,
-			...payload,
-		});
-		setAlvoCancelamento(null);
+	const mensagemSucesso = (origem: CancelamentoOrigem) =>
+		origem === "CLIENTE"
+			? "O horário permaneceu ativo e voltou a ficar disponível."
+			: "O horário foi desativado por indisponibilidade do médico.";
+
+	const handleConfirmarCancelamento = async (payload: CancelamentoPayload) => {
+		if (alvoCancelamento === null || cancelando) return;
+		setCancelando(true);
+		setErroCancelamento(null);
+		try {
+			await cancelarAgendamento(alvoCancelamento.id, payload);
+			const origem = payload.origem;
+			setAlvoCancelamento(null);
+			showToast("Agendamento cancelado", mensagemSucesso(origem));
+			refresh();
+		} catch (err) {
+			setErroCancelamento(
+				err instanceof Error
+					? err.message
+					: "Não foi possível cancelar o agendamento.",
+			);
+		} finally {
+			setCancelando(false);
+		}
+	};
+
+	const handleAbrirCancelamento = (a: Appointment) => {
+		setErroCancelamento(null);
+		setAlvoCancelamento(a);
 	};
 
 	return (
@@ -139,7 +170,7 @@ export function AgendamentosPage() {
 					<>
 						<AppointmentsTable
 							appointments={data.items}
-							onCancelar={setAlvoCancelamento}
+							onCancelar={handleAbrirCancelamento}
 						/>
 						<AppointmentsPagination
 							page={data.page}
@@ -191,6 +222,8 @@ export function AgendamentosPage() {
 				agendamento={alvoCancelamento}
 				onConfirm={handleConfirmarCancelamento}
 				onClose={() => setAlvoCancelamento(null)}
+				submitting={cancelando}
+				error={erroCancelamento ?? undefined}
 			/>
 		</section>
 	);

@@ -13,6 +13,7 @@ interface UseAppointmentsResult {
 	error: string | null;
 	page: number;
 	setPage: (page: number) => void;
+	refresh: () => void;
 }
 
 export function useAppointments(
@@ -54,5 +55,9 @@ export function useAppointments(
 		void fetchPage(page, filters);
 	}, [page, filters, fetchPage]);
 
-	return { data, loading, error, page, setPage };
+	const refresh = useCallback(() => {
+		void fetchPage(page, filters);
+	}, [fetchPage, page, filters]);
+
+	return { data, loading, error, page, setPage, refresh };
 }
