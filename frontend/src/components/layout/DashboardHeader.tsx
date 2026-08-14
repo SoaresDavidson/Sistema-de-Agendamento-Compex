@@ -23,12 +23,12 @@ export function DashboardHeader() {
 	const { pathname } = useLocation();
 	const pageTitle = routeTitles[pathname] ?? "Visão geral";
 	return (
-		<header className="sticky top-0 flex h-18 items-center justify-between border-b border-border px-8">
-			<p className="font-sans text-sm text-muted-foreground">
+		<header className="topbar">
+			<p className="truncate font-sans text-sm text-muted-foreground">
 				Clínica Aurora /{" "}
 				<strong className="font-semibold text-foreground">{pageTitle}</strong>
 			</p>
-			<p className="font-mono text-xs uppercase text-muted-foreground">
+			<p className="topbar-date font-mono text-xs uppercase text-muted-foreground">
 				{getCurrentDate()}
 			</p>
 		</header>

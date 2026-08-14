@@ -7,10 +7,10 @@ export function DashboardLayout() {
 		<div className="app-shell">
 			<DashboardSidebar />
 
-			<div className="min-w-0">
+			<div className="workspace">
 				<DashboardHeader />
 
-				<main className="p-8 font-sans">
+				<main className="outlet">
 					<Outlet />
 				</main>
 			</div>

@@ -1,27 +1,24 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-	"btn inline-flex items-center justify-center gap-2 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed",
-	{
-		variants: {
-			variant: {
-				primary: "btn-primary",
-				secondary: "btn-secondary",
-				ghost: "btn-ghost",
-				danger: "btn-danger",
-			},
-			size: {
-				default: "",
-				sm: "btn-sm",
-			},
+const buttonVariants = cva("btn", {
+	variants: {
+		variant: {
+			primary: "btn-primary",
+			secondary: "btn-secondary",
+			ghost: "btn-ghost",
+			danger: "btn-danger",
 		},
-		defaultVariants: {
-			variant: "primary",
-			size: "default",
+		size: {
+			default: "",
+			sm: "btn-sm",
 		},
 	},
-);
+	defaultVariants: {
+		variant: "primary",
+		size: "default",
+	},
+});
 
 type ButtonProps = React.ComponentProps<"button"> &
 	VariantProps<typeof buttonVariants>;
