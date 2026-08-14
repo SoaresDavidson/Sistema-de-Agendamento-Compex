@@ -1,7 +1,7 @@
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.especialidade import Especialidade
@@ -19,6 +19,17 @@ def criar_especialidade(
     session.add(especialidade)
     session.flush()
     return especialidade
+
+
+def buscar_especialidade_por_nome_normalizado(
+    session: Session,
+    nome: str,
+) -> Especialidade | None:
+    nome_normalizado = func.lower(
+        func.regexp_replace(func.btrim(Especialidade.nome), r"\s+", " ", "g")
+    )
+    statement = select(Especialidade).where(nome_normalizado == nome.lower())
+    return session.scalar(statement)
 
 
 def listar_especialidade(
