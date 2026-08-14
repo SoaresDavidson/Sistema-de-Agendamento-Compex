@@ -167,7 +167,9 @@ describe("AgendamentosPage — integração de paginação", () => {
 		renderPage();
 		await screen.findByText("Cliente 1");
 		expect(
-			screen.getByRole("button", { name: "Página anterior" }),
+			screen.getByRole("button", {
+				name: "Página anterior",
+			}),
 		).toBeDisabled();
 	});
 });
@@ -416,7 +418,9 @@ describe("AgendamentosPage — estado vazio", () => {
 		).toBeInTheDocument();
 		expect(screen.queryByRole("table")).toBeNull();
 		expect(
-			screen.queryByRole("button", { name: /Limpar filtros/i }),
+			screen.queryByRole("button", {
+				name: /Limpar filtros/i,
+			}),
 		).toBeNull();
 		expect(screen.getByText("0 resultados")).toBeInTheDocument();
 	});
@@ -444,7 +448,9 @@ describe("AgendamentosPage — estado vazio", () => {
 				"Revise os filtros ou limpe a busca para voltar à listagem completa.",
 			),
 		).toBeInTheDocument();
-		const limparBtn = screen.getByRole("button", { name: /Limpar filtros/i });
+		const limparBtn = screen.getByRole("button", {
+			name: /Limpar filtros/i,
+		});
 		expect(limparBtn).toBeInTheDocument();
 		expect(limparBtn).toHaveAttribute("type", "button");
 
@@ -452,7 +458,9 @@ describe("AgendamentosPage — estado vazio", () => {
 		await user.click(limparBtn);
 		expect(await screen.findByText("Cliente 1")).toBeInTheDocument();
 		expect(
-			screen.queryByRole("button", { name: /Limpar filtros/i }),
+			screen.queryByRole("button", {
+				name: /Limpar filtros/i,
+			}),
 		).toBeNull();
 	});
 });

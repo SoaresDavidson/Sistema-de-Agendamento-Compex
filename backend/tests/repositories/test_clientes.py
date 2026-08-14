@@ -7,12 +7,14 @@ from sqlalchemy.orm import Session
 
 from app.models.cliente import Client
 from app.repositories.clientes import (
+    apagar_cliente,
+    atualizar_cliente,
     buscar_cliente_por_id,
     buscar_possivel_duplicidade,
     criar_cliente,
     listar_clientes,
 )
-from app.schemas.clientes import ClienteCreate
+from app.schemas.clientes import ClienteCreate, ClienteUpdate
 
 
 def criar_payload_valido() -> ClienteCreate:
@@ -88,6 +90,64 @@ def test_buscar_possivel_duplicidade_por_nome_e_nascimento(
     parametros = statement.compile().params.values()
     assert payload.nome.lower() in parametros
     assert payload.data_nascimento in parametros
+
+
+def test_buscar_duplicidade_exclui_cliente_informado() -> None:
+    session = MagicMock(spec=Session)
+    cliente_id = uuid.uuid4()
+
+    buscar_possivel_duplicidade(
+        session,
+        criar_payload_valido(),
+        cliente_id_excluido=cliente_id,
+    )
+
+    statement = session.scalar.call_args.args[0]
+    sql = str(statement.compile())
+    assert "clientes.id !=" in sql
+    assert cliente_id in statement.compile().params.values()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [ClienteUpdate(nome="Ana Silva"), ClienteUpdate(data_nascimento=date(1990, 5, 10))],
+)
+def test_buscar_duplicidade_incompleta_nao_consulta_banco(
+    payload: ClienteUpdate,
+) -> None:
+    session = MagicMock(spec=Session)
+
+    resultado = buscar_possivel_duplicidade(session, payload)
+
+    assert resultado is None
+    session.scalar.assert_not_called()
+
+
+def test_atualizar_cliente_altera_apenas_campos_fornecidos_e_executa_flush() -> None:
+    session = MagicMock(spec=Session)
+    cliente = criar_modelo_cliente()
+    nome_original = cliente.nome
+    payload = ClienteUpdate(email="novo@example.com")
+
+    resultado = atualizar_cliente(session, cliente, payload)
+
+    assert resultado is cliente
+    assert cliente.nome == nome_original
+    assert cliente.email == "novo@example.com"
+    assert "confirmar_duplicidade" not in cliente.__dict__
+    session.flush.assert_called_once_with()
+    session.commit.assert_not_called()
+
+
+def test_apagar_cliente_remove_modelo_e_executa_flush() -> None:
+    session = MagicMock(spec=Session)
+    cliente = criar_modelo_cliente()
+
+    apagar_cliente(session, cliente)
+
+    session.delete.assert_called_once_with(cliente)
+    session.flush.assert_called_once_with()
+    session.commit.assert_not_called()
 
 
 def test_listar_clientes_sem_proxima_pagina() -> None:

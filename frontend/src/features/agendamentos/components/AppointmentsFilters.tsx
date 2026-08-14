@@ -47,7 +47,9 @@ export function AppointmentsFilters({
 					className="select"
 					value={filters.medico ?? ""}
 					onChange={(e) =>
-						updateFilter({ medico: e.target.value || undefined })
+						updateFilter({
+							medico: e.target.value || undefined,
+						})
 					}
 				>
 					<option value="">Todos</option>
@@ -66,7 +68,9 @@ export function AppointmentsFilters({
 					className="select"
 					value={filters.especialidade ?? ""}
 					onChange={(e) =>
-						updateFilter({ especialidade: e.target.value || undefined })
+						updateFilter({
+							especialidade: e.target.value || undefined,
+						})
 					}
 				>
 					<option value="">Todas</option>
@@ -108,7 +112,11 @@ export function AppointmentsFilters({
 					className="input"
 					type="date"
 					value={filters.data ?? ""}
-					onChange={(e) => updateFilter({ data: e.target.value || undefined })}
+					onChange={(e) =>
+						updateFilter({
+							data: e.target.value || undefined,
+						})
+					}
 				/>
 			</div>
 

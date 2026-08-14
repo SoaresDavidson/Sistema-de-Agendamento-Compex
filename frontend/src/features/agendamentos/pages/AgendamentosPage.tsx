@@ -123,16 +123,18 @@ export function AgendamentosPage() {
 	};
 
 	return (
-		<section>
-			<header className="mx-auto mb-6 max-w-5xl px-8 pt-12 text-left">
-				<h1>Agendamentos</h1>
-				<p>
-					Consulte atendimentos futuros e históricos. Ordenação por data e
-					horário crescentes.
-				</p>
+		<section className="min-w-0">
+			<header className="page-head">
+				<div>
+					<h1>Agendamentos</h1>
+					<p>
+						Consulte atendimentos futuros e históricos. O estado concluído é
+						calculado pelo fim do horário.
+					</p>
+				</div>
 			</header>
 
-			<div className="mx-auto max-w-5xl px-8" aria-busy={loading}>
+			<div className="min-w-0" aria-busy={loading}>
 				<AppointmentsFilters
 					filters={filters}
 					medicos={medicos}
@@ -143,7 +145,7 @@ export function AgendamentosPage() {
 					onClear={handleClear}
 				/>
 
-				<div className="mb-3 flex items-center justify-between">
+				<div className="appointments-summary">
 					<span className="breadcrumb" aria-live="polite">
 						{data
 							? `${data.total} resultado${data.total === 1 ? "" : "s"}`

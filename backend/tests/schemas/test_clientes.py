@@ -9,6 +9,7 @@ from app.schemas.clientes import (
     ClienteCreate,
     ClientePage,
     ClienteResponse,
+    ClienteUpdate,
 )
 
 
@@ -140,3 +141,24 @@ def test_cliente_page_aceita_itens_e_cursor() -> None:
 
     assert pagina.items == [cliente]
     assert pagina.next_cursor == "cursor-seguinte"
+
+
+def test_cliente_update_normaliza_apenas_campos_fornecidos() -> None:
+    cliente = ClienteUpdate.model_validate({"nome": "  Ana   Maria  ", "email": "   "})
+
+    assert cliente.nome == "Ana Maria"
+    assert cliente.email is None
+    assert cliente.model_fields_set == {"nome", "email"}
+
+
+def test_cliente_update_rejeita_payload_vazio() -> None:
+    with pytest.raises(ValidationError, match="ao menos um campo"):
+        ClienteUpdate.model_validate({})
+
+
+@pytest.mark.parametrize("campo", ["nome", "telefone", "data_nascimento"])
+def test_cliente_update_rejeita_campo_obrigatorio_nulo(campo: str) -> None:
+    with pytest.raises(
+        ValidationError, match="campos obrigatórios não podem ser nulos"
+    ):
+        ClienteUpdate.model_validate({campo: None})
