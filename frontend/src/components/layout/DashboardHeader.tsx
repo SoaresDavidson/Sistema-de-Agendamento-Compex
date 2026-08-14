@@ -24,7 +24,7 @@ export function DashboardHeader() {
 	const pageTitle = routeTitles[pathname] ?? "Visão geral";
 	return (
 		<header className="topbar">
-			<p className="truncate font-sans text-sm text-muted-foreground">
+			<p className="truncate text-sm text-muted-foreground">
 				Clínica Aurora /{" "}
 				<strong className="font-semibold text-foreground">{pageTitle}</strong>
 			</p>

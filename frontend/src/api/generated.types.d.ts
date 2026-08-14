@@ -55,6 +55,13 @@ export namespace Schemas {
 		items: Array<ClienteResponse>;
 		next_cursor: string | null;
 	};
+	export type ClienteUpdate = Partial<{
+		nome: string | null;
+		telefone: string | null;
+		email: string | null;
+		data_nascimento: string | null;
+		confirmar_duplicidade: boolean;
+	}>;
 	export type DiaSemana =
 		| "SEGUNDA"
 		| "TERCA"
@@ -190,6 +197,31 @@ export namespace Endpoints {
 			query?: Partial<{ cursor: string | null; limite: number }>;
 		};
 		responses: { 200: Schemas.ClientePage; 422: Schemas.HTTPValidationError };
+	};
+	export type patch_Atualizar_cliente_api_clientes__cliente_id__patch = {
+		method: "PATCH";
+		path: "/api/clientes/{cliente_id}";
+		requestFormat: "json";
+		responseFormat: "json";
+		parameters: {
+			path: { cliente_id: string };
+
+			body: Schemas.ClienteUpdate;
+		};
+		responses: {
+			200: Schemas.ClienteResponse;
+			422: Schemas.HTTPValidationError;
+		};
+	};
+	export type delete_Excluir_cliente_api_clientes__cliente_id__delete = {
+		method: "DELETE";
+		path: "/api/clientes/{cliente_id}";
+		requestFormat: "json";
+		responseFormat: "json";
+		parameters: {
+			path: { cliente_id: string };
+		};
+		responses: { 204: unknown; 422: Schemas.HTTPValidationError };
 	};
 	export type post_Criar_especialidade_api_especialidades_post = {
 		method: "POST";
@@ -342,7 +374,11 @@ export type EndpointByMethod = {
 	};
 	patch: {
 		"/api/agendamentos/{agendamento_id}/cancelar": Endpoints.patch_Cancelar_api_agendamentos__agendamento_id__cancelar_patch;
+		"/api/clientes/{cliente_id}": Endpoints.patch_Atualizar_cliente_api_clientes__cliente_id__patch;
 		"/api/horarios/{horario_id}/desativar": Endpoints.patch_Desativar_api_horarios__horario_id__desativar_patch;
+	};
+	delete: {
+		"/api/clientes/{cliente_id}": Endpoints.delete_Excluir_cliente_api_clientes__cliente_id__delete;
 	};
 };
 
@@ -352,4 +388,5 @@ export type EndpointByMethod = {
 export type GetEndpoints = EndpointByMethod["get"];
 export type PostEndpoints = EndpointByMethod["post"];
 export type PatchEndpoints = EndpointByMethod["patch"];
+export type DeleteEndpoints = EndpointByMethod["delete"];
 // </EndpointByMethod.Shorthands>

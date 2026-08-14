@@ -73,7 +73,9 @@ describe("CancelamentoModal", () => {
 		await user.type(screen.getByLabelText("Observação opcional"), "rascunho");
 
 		await user.click(
-			screen.getByRole("button", { name: "Manter agendamento" }),
+			screen.getByRole("button", {
+				name: "Manter agendamento",
+			}),
 		);
 
 		expect(onConfirm).not.toHaveBeenCalled();
@@ -97,7 +99,9 @@ describe("CancelamentoModal", () => {
 			"texto a perder",
 		);
 		expect(
-			screen.getByRole("button", { name: "Confirmar cancelamento" }),
+			screen.getByRole("button", {
+				name: "Confirmar cancelamento",
+			}),
 		).toBeEnabled();
 
 		rerender(
@@ -118,7 +122,9 @@ describe("CancelamentoModal", () => {
 		);
 
 		expect(
-			screen.getByRole("button", { name: "Confirmar cancelamento" }),
+			screen.getByRole("button", {
+				name: "Confirmar cancelamento",
+			}),
 		).toBeDisabled();
 		expect(screen.getByLabelText("Observação opcional")).toHaveValue("");
 	});
@@ -134,7 +140,9 @@ describe("CancelamentoModal", () => {
 			"Médico em cirurgia  ",
 		);
 		fireEvent.click(
-			screen.getByRole("button", { name: "Confirmar cancelamento" }),
+			screen.getByRole("button", {
+				name: "Confirmar cancelamento",
+			}),
 		);
 
 		expect(onConfirm).toHaveBeenCalledWith({
@@ -150,7 +158,9 @@ describe("CancelamentoModal", () => {
 
 		await user.click(screen.getByLabelText("Solicitação do cliente"));
 		fireEvent.click(
-			screen.getByRole("button", { name: "Confirmar cancelamento" }),
+			screen.getByRole("button", {
+				name: "Confirmar cancelamento",
+			}),
 		);
 
 		expect(onConfirm).toHaveBeenCalledWith({

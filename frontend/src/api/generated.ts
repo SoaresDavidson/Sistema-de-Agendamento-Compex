@@ -85,6 +85,17 @@ export const ClientePage = z.object({
 	next_cursor: z.string().nullable(),
 });
 
+export type ClienteUpdate = __TypedOpenapi.Schemas.ClienteUpdate;
+export const ClienteUpdate = z
+	.object({
+		nome: z.string().min(1).max(255).nullable(),
+		telefone: z.string().min(1).max(255).nullable(),
+		email: z.email().nullable(),
+		data_nascimento: z.iso.date().nullable(),
+		confirmar_duplicidade: z.boolean().default(false),
+	})
+	.partial();
+
 export type DiaSemana = __TypedOpenapi.Schemas.DiaSemana;
 export const DiaSemana = z.enum([
 	"SEGUNDA",

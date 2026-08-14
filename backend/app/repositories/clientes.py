@@ -1,11 +1,12 @@
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
+from app.models.agendamento import Agendamento
 from app.models.cliente import Client
-from app.schemas.clientes import ClienteCreate
+from app.schemas.clientes import ClienteCreate, ClienteUpdate
 
 _DEFAULT_LIMIT = 20
 _MAX_LIMIT = 100
@@ -22,18 +23,42 @@ def buscar_cliente_por_id(session: Session, client_id: uuid.UUID) -> Client | No
     return session.get(Client, client_id)
 
 
+def cliente_possui_agendamentos(session: Session, cliente_id: uuid.UUID) -> bool:
+    statement = select(exists().where(Agendamento.cliente_id == cliente_id))
+    return session.scalar(statement) is True
+
+
 def buscar_possivel_duplicidade(
     session: Session,
-    payload: ClienteCreate,
+    payload: ClienteCreate | ClienteUpdate,
+    cliente_id_excluido: uuid.UUID | None = None,
 ) -> Client | None:
-    return session.scalar(
-        select(Client)
-        .where(
-            func.lower(Client.nome) == payload.nome.lower(),
-            Client.data_nascimento == payload.data_nascimento,
-        )
-        .limit(1)
+    if payload.nome is None or payload.data_nascimento is None:
+        return None
+
+    statement = select(Client).where(
+        func.lower(Client.nome) == payload.nome.lower(),
+        Client.data_nascimento == payload.data_nascimento,
     )
+    if cliente_id_excluido is not None:
+        statement = statement.where(Client.id != cliente_id_excluido)
+
+    return session.scalar(statement.limit(1))
+
+
+def atualizar_cliente(
+    session: Session,
+    cliente: Client,
+    payload: ClienteUpdate,
+) -> Client:
+    campos = payload.model_dump(
+        exclude={"confirmar_duplicidade"},
+        exclude_unset=True,
+    )
+    for campo, valor in campos.items():
+        setattr(cliente, campo, valor)
+    session.flush()
+    return cliente
 
 
 def listar_clientes(
@@ -57,6 +82,6 @@ def listar_clientes(
     return clientes, proximo_id
 
 
-def apagar_cliente(session: Session, payload: Client):
-    # TODO implementar constraint de só apagar cliente com 0 agendamento quando existir tabela agendamento
-    pass
+def apagar_cliente(session: Session, cliente: Client) -> None:
+    session.delete(cliente)
+    session.flush()

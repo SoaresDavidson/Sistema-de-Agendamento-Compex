@@ -69,22 +69,34 @@ describe("AppointmentsTable", () => {
 		const rows = screen.getAllByRole("row").slice(1);
 
 		expect(
-			within(rows[0]).getAllByRole("button", { name: "Cancelar" }),
+			within(rows[0]).getAllByRole("button", {
+				name: "Cancelar",
+			}),
 		).toHaveLength(1);
 		expect(
-			within(rows[1]).queryByRole("button", { name: "Cancelar" }),
+			within(rows[1]).queryByRole("button", {
+				name: "Cancelar",
+			}),
 		).toBeNull();
 		expect(
-			within(rows[2]).queryByRole("button", { name: "Cancelar" }),
+			within(rows[2]).queryByRole("button", {
+				name: "Cancelar",
+			}),
 		).toBeNull();
 		expect(
-			within(rows[0]).getByRole("button", { name: "Detalhes" }),
+			within(rows[0]).getByRole("button", {
+				name: "Detalhes",
+			}),
 		).toBeInTheDocument();
 		expect(
-			within(rows[1]).getByRole("button", { name: "Detalhes" }),
+			within(rows[1]).getByRole("button", {
+				name: "Detalhes",
+			}),
 		).toBeInTheDocument();
 		expect(
-			within(rows[2]).getByRole("button", { name: "Detalhes" }),
+			within(rows[2]).getByRole("button", {
+				name: "Detalhes",
+			}),
 		).toBeInTheDocument();
 	});
 
