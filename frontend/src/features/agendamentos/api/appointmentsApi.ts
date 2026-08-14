@@ -1,7 +1,12 @@
-import { listMockAppointments } from "./mockAppointments";
+import {
+	cancelMockAppointment,
+	listMockAppointments,
+} from "./mockAppointments";
 import type {
 	Appointment,
 	AppointmentFilters,
+	CancelamentoPayload,
+	CancelamentoResponse,
 	ListAppointmentsParams,
 	PaginatedResponse,
 } from "./types";
@@ -59,5 +64,49 @@ export async function listAppointments({
 		);
 		await delay(150);
 		return listMockAppointments(page, size, filters);
+	}
+}
+
+export async function cancelarAgendamento(
+	id: string,
+	payload: CancelamentoPayload,
+): Promise<CancelamentoResponse> {
+	try {
+		const res = await fetch(`${API_BASE}/agendamentos/${id}/cancelar`, {
+			method: "PATCH",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(payload),
+		});
+		if (!res.ok) {
+			const errorBody = await res.json().catch(() => ({}));
+			const detail = errorBody.detail || "Erro ao cancelar agendamento";
+			throw new Error(detail);
+		}
+		return (await res.json()) as CancelamentoResponse;
+	} catch (err) {
+		console.warn(
+			"[agendamentos] cancelamento indisponível, usando mock:",
+			err instanceof Error ? err.message : err,
+		);
+		await delay(150);
+		const result = cancelMockAppointment(
+			id,
+			payload.origem,
+			payload.observacao,
+		);
+		if (!result.success) {
+			throw new Error(result.error);
+		}
+		// Retorna shape compatível com o backend (mock)
+		return {
+			id,
+			status: "CANCELADO",
+			cancelado_por: payload.origem,
+			cancelado_em: new Date().toISOString(),
+			observacao_cancelamento: payload.observacao ?? null,
+		};
 	}
 }

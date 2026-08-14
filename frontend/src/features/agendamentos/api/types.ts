@@ -40,3 +40,11 @@ export interface CancelamentoPayload {
 	origem: CancelamentoOrigem;
 	observacao?: string;
 }
+
+export interface CancelamentoResponse {
+	id: string;
+	status: AppointmentStatus;
+	cancelado_por: CancelamentoOrigem | null;
+	cancelado_em: string | null;
+	observacao_cancelamento: string | null;
+}
