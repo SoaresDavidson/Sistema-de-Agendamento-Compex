@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Uuid, text
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -16,6 +16,11 @@ if TYPE_CHECKING:
 class StatusAgendamento(StrEnum):
     AGENDADO = "AGENDADO"
     CANCELADO = "CANCELADO"
+
+
+class CancelamentoOrigem(StrEnum):
+    CLIENTE = "CLIENTE"
+    MEDICO = "MEDICO"
 
 
 class Agendamento(Base):
@@ -56,6 +61,18 @@ class Agendamento(Base):
         nullable=False,
         default=lambda: datetime.now(UTC),
         server_default=text("now()"),
+    )
+    cancelado_por: Mapped["CancelamentoOrigem | None"] = mapped_column(
+        Enum(CancelamentoOrigem, name="cancelamento_origem"),
+        nullable=True,
+    )
+    cancelado_em: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    observacao_cancelamento: Mapped[str | None] = mapped_column(
+        String(1000),
+        nullable=True,
     )
 
     cliente: Mapped["Client"] = relationship(back_populates="agendamentos")

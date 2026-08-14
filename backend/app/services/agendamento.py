@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.models.agendamento import Agendamento, StatusAgendamento
+from app.models.agendamento import Agendamento, CancelamentoOrigem, StatusAgendamento
 from app.repositories.agendamento import buscar_agendamento_por_id, criar_agendamento
 from app.repositories.clientes import buscar_cliente_por_id
 from app.repositories.horario import buscar_horario_para_agendamento
@@ -59,4 +59,21 @@ def validar_cancelamento(
         raise AgendamentoNaoEncontradoError(agendamento_id)
     if agendamento.status is not StatusAgendamento.AGENDADO:
         raise AgendamentoJaCanceladoError(agendamento_id)
+    return agendamento
+
+
+def aplicar_cancelamento(
+    session: Session,
+    agendamento: Agendamento,
+    origem: CancelamentoOrigem,
+    observacao: str | None,
+) -> Agendamento:
+    agendamento.status = StatusAgendamento.CANCELADO
+    agendamento.cancelado_por = origem
+    agendamento.cancelado_em = datetime.now(UTC)
+    observacao_limpa = observacao.strip() if observacao else None
+    agendamento.observacao_cancelamento = observacao_limpa or None
+    if origem is CancelamentoOrigem.MEDICO:
+        agendamento.horario.ativo = False
+    session.flush()
     return agendamento
