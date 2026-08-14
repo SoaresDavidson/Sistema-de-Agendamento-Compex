@@ -164,4 +164,21 @@ export function extractFilterOptions(appointments: Appointment[]): {
 	};
 }
 
+export function cancelMockAppointment(
+	id: string,
+	_origem: "CLIENTE" | "MEDICO",
+	_observacao?: string,
+): { success: true } | { success: false; error: string } {
+	const idx = MOCK_APPOINTMENTS.findIndex((a) => a.id === id);
+	if (idx === -1) {
+		return { success: false, error: "Agendamento não encontrado" };
+	}
+	const appointment = MOCK_APPOINTMENTS[idx];
+	if (appointment.status !== "AGENDADO") {
+		return { success: false, error: "Agendamento já está cancelado" };
+	}
+	appointment.status = "CANCELADO";
+	return { success: true };
+}
+
 export { MOCK_APPOINTMENTS };

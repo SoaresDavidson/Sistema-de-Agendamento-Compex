@@ -11,6 +11,8 @@ interface CancelamentoModalProps {
 	agendamento: Appointment | null;
 	onConfirm: (payload: CancelamentoPayload) => void;
 	onClose: () => void;
+	submitting?: boolean;
+	error?: string;
 }
 
 const ORIGENS: ReadonlyArray<{
@@ -35,6 +37,8 @@ export function CancelamentoModal({
 	agendamento,
 	onConfirm,
 	onClose,
+	submitting = false,
+	error,
 }: CancelamentoModalProps) {
 	const [origem, setOrigem] = useState<CancelamentoOrigem | null>(null);
 	const [observacao, setObservacao] = useState("");
@@ -51,7 +55,7 @@ export function CancelamentoModal({
 	if (!open) return null;
 
 	const handleConfirm = () => {
-		if (origem === null) return;
+		if (origem === null || submitting) return;
 		const observacaoTrim = observacao.trim();
 		onConfirm({
 			origem,
@@ -104,6 +108,11 @@ export function CancelamentoModal({
 				</div>
 
 				<div className="modal-body">
+					{error && (
+						<div className="field-error" style={{ marginBottom: "12px" }}>
+							{error}
+						</div>
+					)}
 					<fieldset className="legend">
 						<legend className="legend">Origem do cancelamento</legend>
 						<div
@@ -149,15 +158,15 @@ export function CancelamentoModal({
 				</div>
 
 				<div className="modal-actions">
-					<Button variant="secondary" onClick={onClose}>
+					<Button variant="secondary" onClick={onClose} disabled={submitting}>
 						Manter agendamento
 					</Button>
 					<Button
 						variant="danger"
-						disabled={origem === null}
+						disabled={origem === null || submitting}
 						onClick={handleConfirm}
 					>
-						Confirmar cancelamento
+						{submitting ? "Cancelando..." : "Confirmar cancelamento"}
 					</Button>
 				</div>
 			</div>
