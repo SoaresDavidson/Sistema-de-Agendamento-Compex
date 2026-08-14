@@ -13,7 +13,6 @@ import type { ClienteResponse } from "../types/cliente.types";
 interface ClienteTableProps {
 	clientes: ClienteResponse[];
 	onEditar?: (cliente: ClienteResponse) => void;
-	
 }
 
 const COLUMNS = ["Cliente", "Telefone", "E-mail"] as const;
@@ -36,7 +35,9 @@ export function ClienteTable({ clientes, onEditar }: ClienteTableProps) {
 							<TD>
 								<div className="flex flex-col">
 									<span className="primary-cell">{cliente.nome}</span>
-									<span className="secondary-cell">Nascimento: {cliente.data_nascimento}</span>
+									<span className="secondary-cell">
+										Nascimento: {cliente.data_nascimento}
+									</span>
 								</div>
 							</TD>
 							<TD>{cliente.telefone}</TD>
