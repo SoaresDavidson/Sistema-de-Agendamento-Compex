@@ -1,181 +1,244 @@
 import uuid
-from datetime import UTC, datetime
-from types import SimpleNamespace
-from unittest.mock import MagicMock
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy.orm import Session
 
-from app.models.agendamento import Agendamento, StatusAgendamento
-from app.schemas.agendamento import AgendamentoCreate
-from app.services import agendamento as servico_agendamento
+from app.models.agendamento import Agendamento, CancelamentoOrigem, StatusAgendamento
+from app.models.cliente import Client
+from app.models.horario import Horario
 from app.services.agendamento import (
-    ClienteNaoEncontradoError,
-    HorarioIndisponivelError,
-    HorarioNaoEncontradoParaAgendamentoError,
-    realizar_agendamento,
+    aplicar_cancelamento,
+    validar_cancelamento,
 )
 
-
-def criar_dados() -> AgendamentoCreate:
-    return AgendamentoCreate(cliente_id=uuid.uuid4(), horario_id=uuid.uuid4())
+pytestmark = pytest.mark.integration
 
 
-def criar_horario(
-    *,
-    ativo: bool = True,
-    inicio: datetime | None = None,
-    status_agendamento: StatusAgendamento | None = None,
-) -> SimpleNamespace:
-    agendamentos = (
-        [SimpleNamespace(status=status_agendamento)]
-        if status_agendamento is not None
-        else []
-    )
-    return SimpleNamespace(
-        ativo=ativo,
-        inicio=inicio or datetime(2030, 1, 7, 8, tzinfo=UTC),
-        agendamentos=agendamentos,
-    )
-
-
-def test_realiza_agendamento_para_cliente_e_horario_disponivel(
-    monkeypatch: pytest.MonkeyPatch,
+def test_aplicar_cancelamento_cliente_mantem_horario_ativo(
+    banco_postgres: tuple[Session, uuid.UUID],
 ) -> None:
-    session = MagicMock(spec=Session)
-    dados = criar_dados()
-    agendamento = MagicMock(spec=Agendamento)
-    buscar_cliente = MagicMock(return_value=SimpleNamespace(id=dados.cliente_id))
-    buscar_horario = MagicMock(return_value=criar_horario())
-    persistir = MagicMock(return_value=agendamento)
-    monkeypatch.setattr(servico_agendamento, "buscar_cliente_por_id", buscar_cliente)
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_horario_para_agendamento",
-        buscar_horario,
+    session, medico_id = banco_postgres
+    cliente = Client(
+        nome="Cliente Teste",
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=datetime.now(UTC).date().replace(year=1990),
     )
-    monkeypatch.setattr(servico_agendamento, "criar_agendamento", persistir)
+    inicio = datetime.now(UTC) + timedelta(days=1)
+    horario = Horario(
+        medico_id=medico_id,
+        inicio=inicio,
+        fim=inicio + timedelta(hours=1),
+        ativo=True,
+    )
+    session.add_all([cliente, horario])
+    session.flush()
 
-    resultado = realizar_agendamento(
+    agendamento = Agendamento(
+        cliente_id=cliente.id,
+        horario_id=horario.id,
+        status=StatusAgendamento.AGENDADO,
+    )
+    session.add(agendamento)
+    session.flush()
+    agendamento_id = agendamento.id
+    horario_id = horario.id
+    session.expunge_all()
+
+    # Valida o cancelamento
+    agendamento_validado = validar_cancelamento(session, agendamento_id)
+    # Aplica o cancelamento com origem CLIENTE
+    agendamento_cancelado = aplicar_cancelamento(
         session,
-        dados,
-        agora=datetime(2030, 1, 1, tzinfo=UTC),
+        agendamento_validado,
+        CancelamentoOrigem.CLIENTE,
+        "Paciente desmarcou",
     )
 
-    assert resultado is agendamento
-    buscar_cliente.assert_called_once_with(session, dados.cliente_id)
-    buscar_horario.assert_called_once_with(session, dados.horario_id)
-    persistir.assert_called_once_with(session, dados)
-    session.commit.assert_not_called()
+    assert agendamento_cancelado.status is StatusAgendamento.CANCELADO
+    assert agendamento_cancelado.cancelado_por is CancelamentoOrigem.CLIENTE
+    assert agendamento_cancelado.cancelado_em is not None
+    assert agendamento_cancelado.observacao_cancelamento == "Paciente desmarcou"
+
+    # Verifica que o horário permanece ativo
+    horario_reconsultado = session.get(Horario, horario_id)
+    assert horario_reconsultado is not None
+    assert horario_reconsultado.ativo is True
 
 
-def test_rejeita_cliente_inexistente_sem_consultar_horario(
-    monkeypatch: pytest.MonkeyPatch,
+def test_aplicar_cancelamento_medico_desativa_horario(
+    banco_postgres: tuple[Session, uuid.UUID],
 ) -> None:
-    dados = criar_dados()
-    buscar_horario = MagicMock()
-    persistir = MagicMock()
-    monkeypatch.setattr(servico_agendamento, "buscar_cliente_por_id", lambda *_: None)
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_horario_para_agendamento",
-        buscar_horario,
+    session, medico_id = banco_postgres
+    cliente = Client(
+        nome="Cliente Teste",
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=datetime.now(UTC).date().replace(year=1990),
     )
-    monkeypatch.setattr(servico_agendamento, "criar_agendamento", persistir)
-
-    with pytest.raises(ClienteNaoEncontradoError):
-        realizar_agendamento(MagicMock(spec=Session), dados)
-
-    buscar_horario.assert_not_called()
-    persistir.assert_not_called()
-
-
-def test_rejeita_horario_inexistente_sem_persistir(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    dados = criar_dados()
-    persistir = MagicMock()
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_cliente_por_id",
-        lambda *_: SimpleNamespace(id=dados.cliente_id),
+    inicio = datetime.now(UTC) + timedelta(days=1)
+    horario = Horario(
+        medico_id=medico_id,
+        inicio=inicio,
+        fim=inicio + timedelta(hours=1),
+        ativo=True,
     )
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_horario_para_agendamento",
-        lambda *_: None,
+    session.add_all([cliente, horario])
+    session.flush()
+
+    agendamento = Agendamento(
+        cliente_id=cliente.id,
+        horario_id=horario.id,
+        status=StatusAgendamento.AGENDADO,
     )
-    monkeypatch.setattr(servico_agendamento, "criar_agendamento", persistir)
+    session.add(agendamento)
+    session.flush()
+    agendamento_id = agendamento.id
+    horario_id = horario.id
+    session.expunge_all()
 
-    with pytest.raises(HorarioNaoEncontradoParaAgendamentoError):
-        realizar_agendamento(MagicMock(spec=Session), dados)
-
-    persistir.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    "horario",
-    [
-        criar_horario(ativo=False),
-        criar_horario(inicio=datetime(2030, 1, 1, tzinfo=UTC)),
-        criar_horario(status_agendamento=StatusAgendamento.AGENDADO),
-    ],
-    ids=["inativo", "ocorrido", "agendado"],
-)
-def test_rejeita_horario_indisponivel_sem_persistir(
-    monkeypatch: pytest.MonkeyPatch,
-    horario: SimpleNamespace,
-) -> None:
-    dados = criar_dados()
-    persistir = MagicMock()
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_cliente_por_id",
-        lambda *_: SimpleNamespace(id=dados.cliente_id),
-    )
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_horario_para_agendamento",
-        lambda *_: horario,
-    )
-    monkeypatch.setattr(servico_agendamento, "criar_agendamento", persistir)
-
-    with pytest.raises(HorarioIndisponivelError):
-        realizar_agendamento(
-            MagicMock(spec=Session),
-            dados,
-            agora=datetime(2030, 1, 2, tzinfo=UTC),
-        )
-
-    persistir.assert_not_called()
-
-
-def test_agendamento_cancelado_nao_impede_reutilizacao_do_horario(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    session = MagicMock(spec=Session)
-    dados = criar_dados()
-    agendamento = MagicMock(spec=Agendamento)
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_cliente_por_id",
-        lambda *_: SimpleNamespace(id=dados.cliente_id),
-    )
-    monkeypatch.setattr(
-        servico_agendamento,
-        "buscar_horario_para_agendamento",
-        lambda *_: criar_horario(status_agendamento=StatusAgendamento.CANCELADO),
-    )
-    monkeypatch.setattr(
-        servico_agendamento,
-        "criar_agendamento",
-        MagicMock(return_value=agendamento),
-    )
-
-    resultado = realizar_agendamento(
+    agendamento_validado = validar_cancelamento(session, agendamento_id)
+    agendamento_cancelado = aplicar_cancelamento(
         session,
-        dados,
-        agora=datetime(2030, 1, 2, tzinfo=UTC),
+        agendamento_validado,
+        CancelamentoOrigem.MEDICO,
+        "Indisponibilidade do médico",
     )
 
-    assert resultado is agendamento
+    assert agendamento_cancelado.status is StatusAgendamento.CANCELADO
+    assert agendamento_cancelado.cancelado_por is CancelamentoOrigem.MEDICO
+    assert agendamento_cancelado.cancelado_em is not None
+    assert (
+        agendamento_cancelado.observacao_cancelamento == "Indisponibilidade do médico"
+    )
+
+    # Verifica que o horário foi desativado
+    horario_reconsultado = session.get(Horario, horario_id)
+    assert horario_reconsultado is not None
+    assert horario_reconsultado.ativo is False
+
+
+def test_aplicar_cancelamento_observacao_preservada_quando_informada(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    cliente = Client(
+        nome="Cliente Teste",
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=datetime.now(UTC).date().replace(year=1990),
+    )
+    inicio = datetime.now(UTC) + timedelta(days=1)
+    horario = Horario(
+        medico_id=medico_id,
+        inicio=inicio,
+        fim=inicio + timedelta(hours=1),
+        ativo=True,
+    )
+    session.add_all([cliente, horario])
+    session.flush()
+
+    agendamento = Agendamento(
+        cliente_id=cliente.id,
+        horario_id=horario.id,
+        status=StatusAgendamento.AGENDADO,
+    )
+    session.add(agendamento)
+    session.flush()
+    agendamento_id = agendamento.id
+    session.expunge_all()
+
+    agendamento_validado = validar_cancelamento(session, agendamento_id)
+    agendamento_cancelado = aplicar_cancelamento(
+        session,
+        agendamento_validado,
+        CancelamentoOrigem.CLIENTE,
+        "  Paciente ligou para desmarcar  ",
+    )
+
+    assert (
+        agendamento_cancelado.observacao_cancelamento == "Paciente ligou para desmarcar"
+    )
+
+
+def test_aplicar_cancelamento_observacao_vazia_vira_none(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    cliente = Client(
+        nome="Cliente Teste",
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=datetime.now(UTC).date().replace(year=1990),
+    )
+    inicio = datetime.now(UTC) + timedelta(days=1)
+    horario = Horario(
+        medico_id=medico_id,
+        inicio=inicio,
+        fim=inicio + timedelta(hours=1),
+        ativo=True,
+    )
+    session.add_all([cliente, horario])
+    session.flush()
+
+    agendamento = Agendamento(
+        cliente_id=cliente.id,
+        horario_id=horario.id,
+        status=StatusAgendamento.AGENDADO,
+    )
+    session.add(agendamento)
+    session.flush()
+    agendamento_id = agendamento.id
+    session.expunge_all()
+
+    agendamento_validado = validar_cancelamento(session, agendamento_id)
+    agendamento_cancelado = aplicar_cancelamento(
+        session,
+        agendamento_validado,
+        CancelamentoOrigem.CLIENTE,
+        "   ",
+    )
+
+    assert agendamento_cancelado.observacao_cancelamento is None
+
+
+def test_aplicar_cancelamento_sem_observacao_vira_none(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    cliente = Client(
+        nome="Cliente Teste",
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=datetime.now(UTC).date().replace(year=1990),
+    )
+    inicio = datetime.now(UTC) + timedelta(days=1)
+    horario = Horario(
+        medico_id=medico_id,
+        inicio=inicio,
+        fim=inicio + timedelta(hours=1),
+        ativo=True,
+    )
+    session.add_all([cliente, horario])
+    session.flush()
+
+    agendamento = Agendamento(
+        cliente_id=cliente.id,
+        horario_id=horario.id,
+        status=StatusAgendamento.AGENDADO,
+    )
+    session.add(agendamento)
+    session.flush()
+    agendamento_id = agendamento.id
+    session.expunge_all()
+
+    agendamento_validado = validar_cancelamento(session, agendamento_id)
+    agendamento_cancelado = aplicar_cancelamento(
+        session,
+        agendamento_validado,
+        CancelamentoOrigem.CLIENTE,
+        None,
+    )
+
+    assert agendamento_cancelado.observacao_cancelamento is None

@@ -14,6 +14,9 @@ def test_modelo_possui_campos_esperados() -> None:
         "horario_id",
         "status",
         "criado_em",
+        "cancelado_por",
+        "cancelado_em",
+        "observacao_cancelamento",
     }
 
 
