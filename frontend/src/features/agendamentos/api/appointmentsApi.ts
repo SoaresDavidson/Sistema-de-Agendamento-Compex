@@ -1,3 +1,4 @@
+import { api } from "@/api/api";
 import {
 	cancelMockAppointment,
 	listMockAppointments,
@@ -10,8 +11,6 @@ import type {
 	ListAppointmentsParams,
 	PaginatedResponse,
 } from "./types";
-
-const API_BASE = "/api";
 
 async function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -41,13 +40,9 @@ export async function listAppointments({
 }: ListAppointmentsParams): Promise<PaginatedResponse<Appointment>> {
 	try {
 		const qs = buildQueryString(page, size, filters);
-		const res = await fetch(`${API_BASE}/agendamentos?${qs}`, {
-			headers: { Accept: "application/json" },
-		});
-		if (!res.ok) {
-			throw new Error(`Falha ao consultar agendamentos (${res.status})`);
-		}
-		const payload = (await res.json()) as PaginatedResponse<Appointment>;
+		const payload = await api.get<PaginatedResponse<Appointment>>(
+			`/agendamentos?${qs}`,
+		);
 		if (
 			!Array.isArray(payload?.items) ||
 			typeof payload?.page !== "number" ||
@@ -72,20 +67,10 @@ export async function cancelarAgendamento(
 	payload: CancelamentoPayload,
 ): Promise<CancelamentoResponse> {
 	try {
-		const res = await fetch(`${API_BASE}/agendamentos/${id}/cancelar`, {
-			method: "PATCH",
-			headers: {
-				Accept: "application/json",
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify(payload),
-		});
-		if (!res.ok) {
-			const errorBody = await res.json().catch(() => ({}));
-			const detail = errorBody.detail || "Erro ao cancelar agendamento";
-			throw new Error(detail);
-		}
-		return (await res.json()) as CancelamentoResponse;
+		return await api.patch<CancelamentoResponse>(
+			`/agendamentos/${id}/cancelar`,
+			payload,
+		);
 	} catch (err) {
 		console.warn(
 			"[agendamentos] cancelamento indisponível, usando mock:",

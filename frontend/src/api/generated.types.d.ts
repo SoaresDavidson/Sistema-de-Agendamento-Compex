@@ -1,10 +1,23 @@
 export namespace Schemas {
 	// <Schemas>
-	export type AgendamentoCreate = {
-		cliente_id: string;
-		horario_id: string;
-	};
+	export type AgendamentoCreate = { cliente_id: string; horario_id: string };
 	export type StatusAgendamento = "AGENDADO" | "CANCELADO";
+	export type AgendamentoListagemResponse = {
+		id: string;
+		cliente: string;
+		medico: string;
+		especialidade: string;
+		data: string;
+		horario: string;
+		status: StatusAgendamento;
+	};
+	export type AgendamentoPage = {
+		items: Array<AgendamentoListagemResponse>;
+		page: number;
+		size: number;
+		total: number;
+		totalPages: number;
+	};
 	export type AgendamentoResponse = {
 		cliente_id: string;
 		horario_id: string;
@@ -51,10 +64,7 @@ export namespace Schemas {
 		| "SABADO"
 		| "DOMINGO";
 	export type EspecialidadeCreate = { nome: string };
-	export type EspecialidadeResponse = {
-		nome: string;
-		id: string;
-	};
+	export type EspecialidadeResponse = { nome: string; id: string };
 	export type EspecialidadePage = {
 		items: Array<EspecialidadeResponse>;
 		next_cursor: string | null;
@@ -66,18 +76,13 @@ export namespace Schemas {
 		input?: unknown;
 		ctx?: Record<string, unknown>;
 	};
-	export type HTTPValidationError = Partial<{
-		detail: Array<ValidationError>;
-	}>;
+	export type HTTPValidationError = Partial<{ detail: Array<ValidationError> }>;
 	export type HorarioCreate = {
 		medico_id: string;
 		inicio: string;
 		fim: string;
 	};
-	export type MedicoHorarioDisponivelResponse = {
-		id: string;
-		nome: string;
-	};
+	export type MedicoHorarioDisponivelResponse = { id: string; nome: string };
 	export type HorarioDisponivelResponse = {
 		id: string;
 		inicio: string;
@@ -104,10 +109,7 @@ export namespace Schemas {
 		horarios: Array<HorarioResponse>;
 		total_criados: number;
 	};
-	export type MedicoCreate = {
-		nome: string;
-		especialidades_id: Array<string>;
-	};
+	export type MedicoCreate = { nome: string; especialidades_id: Array<string> };
 	export type MedicoResponse = {
 		nome: string;
 		id: string;
@@ -124,6 +126,19 @@ export namespace Schemas {
 export namespace Endpoints {
 	// <Endpoints>
 
+	export type get_Listar_api_agendamentos_get = {
+		method: "GET";
+		path: "/api/agendamentos";
+		requestFormat: "json";
+		responseFormat: "json";
+		parameters: {
+			query?: Partial<{ page: number; size: number }>;
+		};
+		responses: {
+			200: Schemas.AgendamentoPage;
+			422: Schemas.HTTPValidationError;
+		};
+	};
 	export type post_Criar_api_agendamentos_post = {
 		method: "POST";
 		path: "/api/agendamentos";
@@ -172,15 +187,9 @@ export namespace Endpoints {
 		requestFormat: "json";
 		responseFormat: "json";
 		parameters: {
-			query?: Partial<{
-				cursor: string | null;
-				limite: number;
-			}>;
+			query?: Partial<{ cursor: string | null; limite: number }>;
 		};
-		responses: {
-			200: Schemas.ClientePage;
-			422: Schemas.HTTPValidationError;
-		};
+		responses: { 200: Schemas.ClientePage; 422: Schemas.HTTPValidationError };
 	};
 	export type post_Criar_especialidade_api_especialidades_post = {
 		method: "POST";
@@ -201,10 +210,7 @@ export namespace Endpoints {
 		requestFormat: "json";
 		responseFormat: "json";
 		parameters: {
-			query?: Partial<{
-				cursor: string | null;
-				limite: number;
-			}>;
+			query?: Partial<{ cursor: string | null; limite: number }>;
 		};
 		responses: {
 			200: Schemas.EspecialidadePage;
@@ -293,10 +299,7 @@ export namespace Endpoints {
 				especialidade_id: string | null;
 			}>;
 		};
-		responses: {
-			200: Schemas.MedicoPage;
-			422: Schemas.HTTPValidationError;
-		};
+		responses: { 200: Schemas.MedicoPage; 422: Schemas.HTTPValidationError };
 	};
 	export type get_Read_root__get = {
 		method: "GET";
@@ -320,6 +323,15 @@ export namespace Endpoints {
 
 // <EndpointByMethod>
 export type EndpointByMethod = {
+	get: {
+		"/api/agendamentos": Endpoints.get_Listar_api_agendamentos_get;
+		"/api/clientes": Endpoints.get_Listar_clientes_api_clientes_get;
+		"/api/especialidades": Endpoints.get_Listar_especialidades_api_especialidades_get;
+		"/api/horarios/disponiveis": Endpoints.get_Listar_horarios_disponiveis_api_horarios_disponiveis_get;
+		"/api/medicos": Endpoints.get_Listar_medicos_api_medicos_get;
+		"/": Endpoints.get_Read_root__get;
+		"/api/health": Endpoints.get_Health_check_api_health_get;
+	};
 	post: {
 		"/api/agendamentos": Endpoints.post_Criar_api_agendamentos_post;
 		"/api/clientes": Endpoints.post_Criar_cliente_api_clientes_post;
@@ -332,20 +344,12 @@ export type EndpointByMethod = {
 		"/api/agendamentos/{agendamento_id}/cancelar": Endpoints.patch_Cancelar_api_agendamentos__agendamento_id__cancelar_patch;
 		"/api/horarios/{horario_id}/desativar": Endpoints.patch_Desativar_api_horarios__horario_id__desativar_patch;
 	};
-	get: {
-		"/api/clientes": Endpoints.get_Listar_clientes_api_clientes_get;
-		"/api/especialidades": Endpoints.get_Listar_especialidades_api_especialidades_get;
-		"/api/horarios/disponiveis": Endpoints.get_Listar_horarios_disponiveis_api_horarios_disponiveis_get;
-		"/api/medicos": Endpoints.get_Listar_medicos_api_medicos_get;
-		"/": Endpoints.get_Read_root__get;
-		"/api/health": Endpoints.get_Health_check_api_health_get;
-	};
 };
 
 // </EndpointByMethod>
 
 // <EndpointByMethod.Shorthands>
+export type GetEndpoints = EndpointByMethod["get"];
 export type PostEndpoints = EndpointByMethod["post"];
 export type PatchEndpoints = EndpointByMethod["patch"];
-export type GetEndpoints = EndpointByMethod["get"];
 // </EndpointByMethod.Shorthands>

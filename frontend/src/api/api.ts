@@ -9,7 +9,10 @@ export class ApiError extends Error {
 	}
 }
 
-export async function apiRequest(endpoint: string, options: RequestInit = {}) {
+export async function apiRequest<T>(
+	endpoint: string,
+	options: RequestInit = {},
+): Promise<T> {
 	const url = `${BASE_URL}${endpoint}`;
 	const headers = new Headers(options.headers || {});
 
@@ -19,25 +22,35 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 	});
 
 	if (!response.ok) {
-		const errorText = await response.text();
-		throw new ApiError(response.status, errorText);
+		const errorBody = await response.json().catch(() => ({}));
+		const detail = errorBody.detail ?? errorBody.mensagem;
+		const message =
+			typeof detail === "string" ? detail : JSON.stringify(detail ?? errorBody);
+		throw new ApiError(response.status, message);
 	}
-	return response.json();
+	return (await response.json()) as T;
 }
 
 export const api = {
-	get: (endpoint: string) => apiRequest(endpoint, { method: "GET" }),
-	post: (endpoint: string, body: unknown) =>
-		apiRequest(endpoint, {
+	get: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: "GET" }),
+	post: <T>(endpoint: string, body: unknown) =>
+		apiRequest<T>(endpoint, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		}),
-	put: (endpoint: string, body: unknown) =>
-		apiRequest(endpoint, {
+	put: <T>(endpoint: string, body: unknown) =>
+		apiRequest<T>(endpoint, {
 			method: "PUT",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		}),
-	delete: (endpoint: string) => apiRequest(endpoint, { method: "DELETE" }),
+	patch: <T>(endpoint: string, body: unknown) =>
+		apiRequest<T>(endpoint, {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(body),
+		}),
+	delete: <T>(endpoint: string) =>
+		apiRequest<T>(endpoint, { method: "DELETE" }),
 };
