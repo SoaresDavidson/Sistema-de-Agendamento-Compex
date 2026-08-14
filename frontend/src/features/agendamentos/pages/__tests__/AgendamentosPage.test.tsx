@@ -1,12 +1,23 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type {
-	Appointment,
-	AppointmentFilters,
-	PaginatedResponse,
-} from "../../api/types";
+import { ToastProvider } from "@/components/ui/Toast";
+import type { Appointment, PaginatedResponse } from "../../api/types";
 import { AgendamentosPage } from "../AgendamentosPage";
+
+function renderPage() {
+	return render(
+		<ToastProvider>
+			<AgendamentosPage />
+		</ToastProvider>,
+	);
+}
+
+function botaoCancelarDe(cliente: string) {
+	const row = screen.getByText(cliente).closest("tr");
+	if (!row) throw new Error(`Linha não encontrada para ${cliente}`);
+	return within(row).getByRole("button", { name: /Cancelar/i });
+}
 
 const page1: Appointment[] = [
 	{
@@ -76,15 +87,20 @@ const page2: Appointment[] = [
 	},
 ];
 
-const mockListAppointments = vi.fn();
-
-vi.mock("../../api/appointmentsApi", () => ({
-	listAppointments: (params: {
-		page: number;
-		size: number;
-		filters?: AppointmentFilters;
-	}) => mockListAppointments(params),
+const { mockListAppointments, mockCancelarAgendamento } = vi.hoisted(() => ({
+	mockListAppointments: vi.fn(),
+	mockCancelarAgendamento: vi.fn(),
 }));
+
+vi.mock("../../api/appointmentsApi", async (importOriginal) => {
+	const mod =
+		await importOriginal<typeof import("../../api/appointmentsApi")>();
+	return {
+		...mod,
+		listAppointments: mockListAppointments,
+		cancelarAgendamento: mockCancelarAgendamento,
+	};
+});
 
 function buildResponse(page: number): PaginatedResponse<Appointment> {
 	return {
@@ -109,7 +125,7 @@ describe("AgendamentosPage — integração de paginação", () => {
 	});
 
 	it("renderiza a primeira página com 5 registros", async () => {
-		render(<AgendamentosPage />);
+		renderPage();
 		expect(await screen.findByText("Cliente 1")).toBeInTheDocument();
 		const rows = screen.getAllByRole("row").slice(1);
 		expect(rows).toHaveLength(5);
@@ -125,7 +141,7 @@ describe("AgendamentosPage — integração de paginação", () => {
 
 	it("ao clicar na página 2, busca novos registros e atualiza a contagem", async () => {
 		const user = userEvent.setup();
-		render(<AgendamentosPage />);
+		renderPage();
 
 		await screen.findByText("Cliente 1");
 		mockListAppointments.mockClear();
@@ -148,7 +164,7 @@ describe("AgendamentosPage — integração de paginação", () => {
 	});
 
 	it("botão de página anterior fica desabilitado na primeira página", async () => {
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 		expect(
 			screen.getByRole("button", { name: "Página anterior" }),
@@ -169,7 +185,7 @@ describe("AgendamentosPage — filtros da listagem", () => {
 	});
 
 	it("renderiza o toolbar de filtros com os 6 campos acima da tabela", async () => {
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 		expect(screen.getByLabelText("Buscar cliente")).toBeInTheDocument();
 		expect(screen.getByLabelText("Médico")).toBeInTheDocument();
@@ -180,7 +196,7 @@ describe("AgendamentosPage — filtros da listagem", () => {
 
 	it("alterar o select de Status dispara chamada com filtro e volta para página 1", async () => {
 		const user = userEvent.setup();
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 		await user.click(screen.getByRole("button", { name: "Página 2" }));
 		await screen.findByText("Cliente 6");
@@ -205,7 +221,7 @@ describe("AgendamentosPage — filtros da listagem", () => {
 		const user = userEvent.setup({
 			advanceTimers: vi.advanceTimersByTime.bind(vi),
 		});
-		render(<AgendamentosPage />);
+		renderPage();
 		// aguarda a chamada inicial (sem filtros)
 		await vi.waitFor(() => {
 			expect(mockListAppointments).toHaveBeenCalledWith({
@@ -237,7 +253,7 @@ describe("AgendamentosPage — filtros da listagem", () => {
 
 	it("botão Limpar zera filtros e volta para página 1", async () => {
 		const user = userEvent.setup();
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 
 		await user.type(screen.getByLabelText("Buscar cliente"), "Ana");
@@ -258,7 +274,7 @@ describe("AgendamentosPage — filtros da listagem", () => {
 
 	it("filtro por data dispara chamada com data em ISO", async () => {
 		const user = userEvent.setup();
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 		mockListAppointments.mockClear();
 
@@ -293,7 +309,7 @@ describe("AgendamentosPage — estado de carregamento", () => {
 				}),
 		);
 
-		render(<AgendamentosPage />);
+		renderPage();
 
 		// durante o carregamento inicial: skeleton visível, sem tabela
 		await vi.waitFor(() => {
@@ -317,7 +333,7 @@ describe("AgendamentosPage — estado de carregamento", () => {
 			Promise.resolve(buildResponse(page)),
 		);
 
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 
 		// segunda chamada (página 2) fica pendente
@@ -348,7 +364,7 @@ describe("AgendamentosPage — estado de carregamento", () => {
 			Promise.resolve(buildResponse(page)),
 		);
 
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 
 		// próxima chamada (com filtro) fica pendente
@@ -392,7 +408,7 @@ describe("AgendamentosPage — estado vazio", () => {
 	it("exibe mensagem de vazio sem botão Limpar filtros quando não há filtros ativos", async () => {
 		mockListAppointments.mockResolvedValue(emptyResponse);
 
-		render(<AgendamentosPage />);
+		renderPage();
 
 		expect(await screen.findByText("Nenhum agendamento")).toBeInTheDocument();
 		expect(
@@ -414,7 +430,7 @@ describe("AgendamentosPage — estado vazio", () => {
 				: Promise.resolve(buildResponse(1)),
 		);
 
-		render(<AgendamentosPage />);
+		renderPage();
 		await screen.findByText("Cliente 1");
 
 		await user.selectOptions(screen.getByLabelText("Status"), "AGENDADO");
@@ -438,5 +454,133 @@ describe("AgendamentosPage — estado vazio", () => {
 		expect(
 			screen.queryByRole("button", { name: /Limpar filtros/i }),
 		).toBeNull();
+	});
+});
+
+describe("AgendamentosPage — cancelamento (FE3)", () => {
+	beforeEach(() => {
+		mockListAppointments.mockReset();
+		mockListAppointments.mockImplementation(async ({ page }) =>
+			Promise.resolve(buildResponse(page)),
+		);
+		mockCancelarAgendamento.mockReset();
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("fluxo CLIENTE: abre modal, seleciona origem, confirma → fecha modal, toast, lista atualizada", async () => {
+		const user = userEvent.setup();
+		mockCancelarAgendamento.mockResolvedValue({
+			id: "p1-1",
+			status: "CANCELADO",
+			cancelado_por: "CLIENTE",
+			cancelado_em: new Date().toISOString(),
+			observacao_cancelamento: null,
+		});
+
+		renderPage();
+		await screen.findByText("Cliente 1");
+
+		const cancelarBtn = botaoCancelarDe("Cliente 1");
+		await user.click(cancelarBtn);
+
+		await user.click(screen.getByLabelText("Solicitação do cliente"));
+		await user.click(
+			screen.getByRole("button", { name: "Confirmar cancelamento" }),
+		);
+
+		await screen.findByText("Agendamento cancelado");
+		expect(mockCancelarAgendamento).toHaveBeenCalledWith("p1-1", {
+			origem: "CLIENTE",
+			observacao: undefined,
+		});
+	});
+
+	it("fluxo MEDICO: abre modal, seleciona origem, confirma → fecha modal, toast com msg correta", async () => {
+		const user = userEvent.setup();
+		mockCancelarAgendamento.mockResolvedValue({
+			id: "p1-1",
+			status: "CANCELADO",
+			cancelado_por: "MEDICO",
+			cancelado_em: new Date().toISOString(),
+			observacao_cancelamento: null,
+		});
+
+		renderPage();
+		await screen.findByText("Cliente 1");
+
+		const cancelarBtn = botaoCancelarDe("Cliente 1");
+		await user.click(cancelarBtn);
+
+		await user.click(screen.getByLabelText("Indisponibilidade do médico"));
+		await user.click(
+			screen.getByRole("button", { name: "Confirmar cancelamento" }),
+		);
+
+		await screen.findByText("Agendamento cancelado");
+		await screen.findByText(
+			"O horário foi desativado por indisponibilidade do médico.",
+		);
+		expect(mockCancelarAgendamento).toHaveBeenCalledWith("p1-1", {
+			origem: "MEDICO",
+			observacao: undefined,
+		});
+	});
+
+	it("erro mantém modal aberto, preserva origem/observação, exibe mensagem", async () => {
+		const user = userEvent.setup();
+		mockCancelarAgendamento.mockRejectedValue(new Error("Erro de rede"));
+
+		renderPage();
+		await screen.findByText("Cliente 1");
+
+		const cancelarBtn = botaoCancelarDe("Cliente 1");
+		await user.click(cancelarBtn);
+
+		await user.click(screen.getByLabelText("Solicitação do cliente"));
+		await user.type(
+			screen.getByLabelText("Observação opcional"),
+			"Motivo do cancelamento",
+		);
+		await user.click(
+			screen.getByRole("button", { name: "Confirmar cancelamento" }),
+		);
+
+		await screen.findByText("Erro de rede");
+		expect(screen.getByLabelText("Solicitação do cliente")).toBeChecked();
+		expect(screen.getByLabelText("Observação opcional")).toHaveValue(
+			"Motivo do cancelamento",
+		);
+		expect(mockCancelarAgendamento).toHaveBeenCalledTimes(1);
+	});
+
+	it("múltiplos cliques em Confirmar não disparam múltiplas submissões", async () => {
+		const user = userEvent.setup();
+		mockCancelarAgendamento.mockResolvedValue({
+			id: "p1-1",
+			status: "CANCELADO",
+			cancelado_por: "CLIENTE",
+			cancelado_em: new Date().toISOString(),
+			observacao_cancelamento: null,
+		});
+
+		renderPage();
+		await screen.findByText("Cliente 1");
+
+		const cancelarBtn = botaoCancelarDe("Cliente 1");
+		await user.click(cancelarBtn);
+
+		await user.click(screen.getByLabelText("Solicitação do cliente"));
+		const confirmar = screen.getByRole("button", {
+			name: "Confirmar cancelamento",
+		});
+		await user.click(confirmar);
+		await user.click(confirmar);
+		await user.click(confirmar);
+
+		await screen.findByText("Agendamento cancelado");
+		expect(mockCancelarAgendamento).toHaveBeenCalledTimes(1);
 	});
 });
