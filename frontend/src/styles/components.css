@@ -306,6 +306,11 @@
 		);
 	}
 
+	.status-disponivel {
+		color: var(--color-success);
+		background: color-mix(in oklch, var(--color-success) 10%, transparent);
+	}
+
 	.pagination {
 		display: flex;
 		align-items: center;
@@ -370,6 +375,386 @@
 		display: flex;
 		gap: 8px;
 		margin-left: auto;
+	}
+
+	.schedule-filter-bar {
+		align-items: flex-end;
+	}
+
+	.filter-bar-heading {
+		flex: 1 0 100%;
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 16px;
+		padding-bottom: 2px;
+	}
+
+	.filter-bar-heading h2 {
+		margin: 0;
+		font-family: var(--font-heading);
+		font-size: 21px;
+		line-height: 1.2;
+	}
+
+	.filter-bar-heading > div > p {
+		margin: 5px 0 0;
+		color: var(--color-muted-foreground);
+		font-size: 13px;
+	}
+
+	.filter-count {
+		padding: 6px 9px;
+		border-radius: 999px;
+		background: var(--color-muted);
+		color: var(--color-muted-foreground);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		white-space: nowrap;
+	}
+
+	.card {
+		background: var(--color-card);
+		border: 1px solid var(--color-border);
+		border-radius: 16px;
+		padding: 24px;
+		text-align: left;
+	}
+
+	.card-head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 18px;
+		margin-bottom: 24px;
+		text-align: left;
+	}
+
+	.card-title {
+		margin: 0;
+		font-family: var(--font-heading);
+		font-size: 24px;
+		line-height: 1.15;
+		text-align: left;
+	}
+
+	.card-head > div {
+		text-align: left;
+	}
+
+	.card-head > div > p {
+		margin: 6px 0 0;
+		color: var(--color-muted-foreground);
+		font-size: 14px;
+		text-align: left;
+	}
+
+	.mode-checkbox {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 500;
+		color: var(--color-foreground);
+		user-select: none;
+		white-space: nowrap;
+	}
+
+	.mode-checkbox input[type="checkbox"] {
+		width: 16px;
+		height: 16px;
+		accent-color: var(--color-primary);
+		cursor: pointer;
+		margin: 0;
+		flex: none;
+	}
+
+	.form-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 18px;
+	}
+
+	.form-grid .span-2 {
+		grid-column: span 2;
+	}
+
+	.form-grid-three {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 18px;
+	}
+
+	.form-grid-three .span-3 {
+		grid-column: span 3;
+	}
+
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 10px;
+		padding-top: 18px;
+		border-top: 1px solid var(--color-border);
+	}
+
+	.required::after {
+		content: " *";
+		color: var(--color-destructive);
+	}
+
+	.field-help {
+		font-size: 12px;
+		color: var(--color-muted-foreground);
+	}
+
+	.notice {
+		display: flex;
+		gap: 12px;
+		padding: 14px 16px;
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		background: var(--color-background);
+		color: var(--color-foreground);
+		font-size: 14px;
+	}
+
+	.schedule-form-card .notice > p {
+		margin: 4px 0 0;
+		color: var(--color-muted-foreground);
+	}
+
+	.notice.danger {
+		border-color: color-mix(in oklch, var(--color-destructive) 35%, var(--color-border));
+		background: var(--color-feedback-error-bg);
+	}
+
+	.notice.success {
+		border-color: color-mix(in oklch, var(--color-success) 35%, var(--color-border));
+		background: color-mix(in oklch, var(--color-success) 8%, var(--color-card));
+	}
+
+	.notice.warning {
+		border-color: color-mix(in oklch, var(--color-warning) 40%, var(--color-border));
+		background: color-mix(in oklch, var(--color-warning) 10%, var(--color-card));
+	}
+
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 34px;
+		padding: 6px 10px;
+		border: 1px solid var(--color-border);
+		border-radius: 999px;
+		background: var(--color-card);
+		font-size: 13px;
+		cursor: pointer;
+	}
+
+	.chip:has(input:checked) {
+		border-color: var(--color-primary);
+		background: color-mix(in oklch, var(--color-primary) 10%, var(--color-card));
+	}
+
+	.chip input {
+		accent-color: var(--color-primary);
+	}
+
+	.days-field {
+		border: 0;
+		padding: 0;
+		margin: 0;
+		width: 100%;
+	}
+
+	.days-field .chips {
+		display: grid;
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+		gap: 8px;
+		width: 100%;
+	}
+
+	.days-field .chip {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		gap: 6px;
+		width: 100%;
+		min-height: 38px;
+		padding: 6px 4px;
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		background: var(--color-card);
+		font-size: 13px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+	}
+
+	.days-field .chip:hover {
+		border-color: var(--color-primary);
+	}
+
+	.days-field .chip:has(input:checked) {
+		border-color: var(--color-primary);
+		background: color-mix(in oklch, var(--color-primary) 12%, var(--color-card));
+		color: var(--color-primary);
+		font-weight: 600;
+	}
+
+	.days-field .chip input {
+		accent-color: var(--color-primary);
+	}
+
+	.periods-field {
+		display: grid;
+		gap: 12px;
+		width: 100%;
+	}
+
+	.section-heading {
+		display: grid;
+		gap: 4px;
+	}
+
+	.section-heading p {
+		margin: 0;
+		color: var(--color-muted-foreground);
+		font-size: 13px;
+	}
+
+	.period-list {
+		display: grid;
+		gap: 10px;
+	}
+
+	.period-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+		align-items: end;
+		gap: 12px;
+		padding: 12px 14px;
+		border: 1px solid var(--color-border);
+		border-radius: 10px;
+		background: var(--color-background);
+	}
+
+	.period-row .period-duration-field {
+		min-width: 0;
+	}
+
+	.btn-add-period {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		width: 100%;
+		min-height: 42px;
+		padding: 10px 16px;
+		border: 1px dashed var(--color-border);
+		border-radius: 10px;
+		background: var(--color-card);
+		color: var(--color-primary);
+		font-weight: 600;
+		font-size: 14px;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background 0.15s ease;
+	}
+
+	.btn-add-period:hover {
+		border-color: var(--color-primary);
+		background: color-mix(in oklch, var(--color-primary) 8%, var(--color-card));
+	}
+
+	.batch-preview {
+		display: grid;
+		gap: 14px;
+		margin-top: 6px;
+	}
+
+	.preview-summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 14px 16px;
+		border: 1px solid color-mix(in oklch, var(--color-primary) 22%, var(--color-border));
+		border-radius: 12px;
+		background: color-mix(in oklch, var(--color-primary) 6%, var(--color-card));
+	}
+
+	.preview-summary strong,
+	.preview-summary span {
+		display: block;
+	}
+
+	.preview-summary span {
+		margin-top: 3px;
+		color: var(--color-muted-foreground);
+		font-size: 13px;
+	}
+
+	.preview-summary > .preview-summary-icon {
+		width: 32px;
+		height: 32px;
+		margin: 0;
+		border-radius: 50%;
+		background: color-mix(in oklch, var(--color-success) 16%, transparent);
+		color: var(--color-success);
+		display: grid;
+		place-items: center;
+		font-size: 17px;
+		font-weight: 700;
+	}
+
+	.batch-preview-groups {
+		display: grid;
+		gap: 10px;
+	}
+
+	.preview-date-group {
+		padding: 12px;
+		border: 1px solid var(--color-border);
+		border-radius: 10px;
+		background: var(--color-card);
+	}
+
+	.preview-date-heading {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 10px;
+		font-size: 13px;
+	}
+
+	.preview-date-heading span {
+		color: var(--color-muted-foreground);
+		font-family: var(--font-mono);
+		font-size: 11px;
+	}
+
+	.batch-preview-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.batch-block {
+		padding: 8px 10px;
+		border: 1px solid color-mix(in oklch, var(--color-primary) 35%, var(--color-border));
+		border-radius: 8px;
+		background: color-mix(in oklch, var(--color-primary) 8%, var(--color-card));
+		font-family: var(--font-mono);
+		font-size: 12px;
 	}
 
 	.input {
@@ -605,6 +990,11 @@
 			align-items: stretch;
 		}
 
+		.filter-bar-heading {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
 		.toolbar .field,
 		.toolbar .field.search {
 			min-width: 100%;
@@ -617,6 +1007,60 @@
 
 		.toolbar-actions .btn {
 			flex: 1;
+		}
+
+		.card {
+			padding: 18px;
+		}
+
+		.card-head {
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		.mode-checkbox {
+			align-self: flex-start;
+		}
+
+		.form-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.form-grid .span-2 {
+			grid-column: auto;
+		}
+
+		.form-grid-three {
+			grid-template-columns: 1fr;
+		}
+
+		.form-grid-three .span-3 {
+			grid-column: auto;
+		}
+
+		.days-field .chips {
+			grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+		}
+
+		.period-row {
+			grid-template-columns: 1fr 1fr;
+		}
+
+		.period-row .period-duration-field {
+			grid-column: span 2;
+		}
+
+		.period-row .btn {
+			grid-column: span 2;
+			width: 100%;
+		}
+
+		.form-actions {
+			flex-direction: column-reverse;
+		}
+
+		.form-actions .btn {
+			width: 100%;
 		}
 
 		.modal {
