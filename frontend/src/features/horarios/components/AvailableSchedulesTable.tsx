@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type {
 	HorarioDisponivelResponse,
 	MedicoResponse,
@@ -41,6 +42,26 @@ function getSpecialties(medicoId: string, doctors: MedicoResponse[]) {
 		.join(", ");
 }
 
+function getAppointmentHref(
+	schedule: HorarioDisponivelResponse,
+	doctors: MedicoResponse[],
+) {
+	const doctor = doctors.find((item) => item.id === schedule.medico.id);
+	const params = new URLSearchParams({
+		horario: schedule.id,
+		medico: schedule.medico.id,
+		data: schedule.inicio.slice(0, 10),
+		hora: `${formatTime(schedule.inicio)}–${formatTime(schedule.fim)}`,
+	});
+
+	const specialty = doctor?.especialidades[0];
+	if (specialty) {
+		params.set("especialidade", specialty.id);
+	}
+
+	return `/agendamentos/novo?${params.toString()}`;
+}
+
 export function AvailableSchedulesTable({
 	schedules,
 	doctors,
@@ -58,6 +79,7 @@ export function AvailableSchedulesTable({
 						<TH>Médico</TH>
 						<TH>Especialidade</TH>
 						<TH>Situação</TH>
+						<TH>Ações</TH>
 					</TR>
 				</THead>
 				<TBody>
@@ -71,6 +93,14 @@ export function AvailableSchedulesTable({
 							<TD>{getSpecialties(schedule.medico.id, doctors) || "—"}</TD>
 							<TD>
 								<span className="status status-disponivel">DISPONÍVEL</span>
+							</TD>
+							<TD>
+								<Link
+									className="btn btn-secondary btn-sm"
+									to={getAppointmentHref(schedule, doctors)}
+								>
+									Marcar horário
+								</Link>
 							</TD>
 						</TR>
 					))}
