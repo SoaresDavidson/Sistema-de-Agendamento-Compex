@@ -1,6 +1,6 @@
 import math
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy.orm import Session
 
@@ -92,8 +92,38 @@ def listar_agendamentos_service(
     session: Session,
     page: int,
     size: int,
+    cliente: str | None = None,
+    medico: str | None = None,
+    especialidade: str | None = None,
+    status: str | None = None,
+    data: date | None = None,
 ) -> AgendamentoPage:
-    agendamentos, total = listar_agendamentos(session, page, size)
+    status_enum = None
+    if status is not None:
+        try:
+            status_enum = StatusAgendamento(status)
+        except ValueError:
+            status_enum = None
+
+    if status is not None and status_enum is None:
+        return AgendamentoPage(
+            items=[],
+            page=1,
+            size=size,
+            total=0,
+            totalPages=1,
+        )
+
+    agendamentos, total = listar_agendamentos(
+        session,
+        page,
+        size,
+        cliente=cliente,
+        medico=medico,
+        especialidade=especialidade,
+        status=status_enum,
+        data=data,
+    )
 
     total_pages = max(1, math.ceil(total / size))
     safe_page = max(1, min(page, total_pages))

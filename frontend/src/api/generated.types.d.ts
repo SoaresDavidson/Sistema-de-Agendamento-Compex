@@ -139,7 +139,15 @@ export namespace Endpoints {
 		requestFormat: "json";
 		responseFormat: "json";
 		parameters: {
-			query?: Partial<{ page: number; size: number }>;
+			query?: Partial<{
+				page: number;
+				size: number;
+				cliente: string | null;
+				medico: string | null;
+				especialidade: string | null;
+				status: string | null;
+				data: string | null;
+			}>;
 		};
 		responses: {
 			200: Schemas.AgendamentoPage;

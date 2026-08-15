@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -36,8 +37,22 @@ def listar(
     session: SessionDep,
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=100)] = 5,
+    cliente: Annotated[str | None, Query()] = None,
+    medico: Annotated[str | None, Query()] = None,
+    especialidade: Annotated[str | None, Query()] = None,
+    status: Annotated[str | None, Query()] = None,
+    data: Annotated[date | None, Query()] = None,
 ) -> AgendamentoPage:
-    return listar_agendamentos_service(session, page, size)
+    return listar_agendamentos_service(
+        session,
+        page,
+        size,
+        cliente=cliente,
+        medico=medico,
+        especialidade=especialidade,
+        status=status,
+        data=data,
+    )
 
 
 @router.post(
