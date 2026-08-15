@@ -1,4 +1,5 @@
-import { api } from "@/api/api";
+import { ApiError, api } from "@/api/api";
+import { AgendamentoCreate, AgendamentoResponse } from "@/api/generated";
 import {
 	cancelMockAppointment,
 	listMockAppointments,
@@ -94,4 +95,43 @@ export async function cancelarAgendamento(
 			observacao_cancelamento: payload.observacao ?? null,
 		};
 	}
+}
+
+export async function criarAgendamento(
+	payload: AgendamentoCreate,
+): Promise<AgendamentoResponse> {
+	const validPayload = AgendamentoCreate.parse(payload);
+	const response = await api.post("/agendamentos", validPayload);
+	return AgendamentoResponse.parse(response);
+}
+
+export function getAgendamentoErrorMessage(
+	error: unknown,
+	fallback: string,
+): string {
+	if (!(error instanceof ApiError)) {
+		return error instanceof Error ? error.message : fallback;
+	}
+
+	try {
+		const body: unknown = JSON.parse(error.message);
+		if (typeof body !== "object" || body === null || !("detail" in body)) {
+			return error.message || fallback;
+		}
+		const detail = (body as { detail: unknown }).detail;
+		if (typeof detail === "string") return detail;
+		if (Array.isArray(detail)) {
+			const messages = detail.flatMap((item) => {
+				if (typeof item === "object" && item !== null && "msg" in item) {
+					return typeof item.msg === "string" ? [item.msg] : [];
+				}
+				return [];
+			});
+			if (messages.length > 0) return messages.join(" ");
+		}
+	} catch {
+		return error.message || fallback;
+	}
+
+	return error.message || fallback;
 }
