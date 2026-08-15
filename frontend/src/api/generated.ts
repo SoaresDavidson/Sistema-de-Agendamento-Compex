@@ -1,7 +1,7 @@
 // @ts-nocheck
+import type * as __TypedOpenapi from "./generated.types.js";
 
 import { z } from "zod";
-import type * as __TypedOpenapi from "./generated.types.js";
 
 // <Schemas>
 export type AgendamentoCreate = __TypedOpenapi.Schemas.AgendamentoCreate;

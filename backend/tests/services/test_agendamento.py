@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from sqlalchemy.orm import Session
@@ -247,14 +247,18 @@ def test_aplicar_cancelamento_sem_observacao_vira_none(
     assert agendamento_cancelado.observacao_cancelamento is None
 
 
-def criar_medico_com_especialidade(session: Session) -> tuple[Medico, Especialidade]:
+def criar_medico_com_especialidade(
+    session: Session,
+    nome_medico: str = "Dra. Mariana Alves",
+    nome_especialidade: str = "Cardiologia",
+) -> tuple[Medico, Especialidade]:
     # Busca ou cria especialidade para evitar conflito de unique
-    especialidade = session.query(Especialidade).filter_by(nome="Cardiologia").first()
+    especialidade = session.query(Especialidade).filter_by(nome=nome_especialidade).first()
     if not especialidade:
-        especialidade = Especialidade(nome="Cardiologia")
+        especialidade = Especialidade(nome=nome_especialidade)
         session.add(especialidade)
         session.flush()
-    medico = Medico(nome="Dra. Mariana Alves", especialidades=[especialidade])
+    medico = Medico(nome=nome_medico, especialidades=[especialidade])
     session.add(medico)
     session.flush()
     return medico, especialidade
@@ -297,6 +301,39 @@ def limpar_agendamentos(session: Session) -> None:
     """Remove todos os agendamentos para isolar os testes."""
     session.query(Agendamento).delete()
     session.flush()
+
+
+def criar_agendamento_para_medico(
+    session: Session,
+    medico: Medico,
+    cliente_nome: str = "Ana Paula Ribeiro",
+    data: datetime | None = None,
+    status: StatusAgendamento = StatusAgendamento.AGENDADO,
+) -> Agendamento:
+    cliente = Client(
+        nome=cliente_nome,
+        telefone="85999999999",
+        email="cliente@teste.com",
+        data_nascimento=datetime.now(UTC).date().replace(year=1990),
+    )
+    inicio = data or (datetime.now(UTC) + timedelta(days=1))
+    horario = Horario(
+        medico_id=medico.id,
+        inicio=inicio,
+        fim=inicio + timedelta(hours=1),
+        ativo=True,
+    )
+    session.add_all([cliente, horario])
+    session.flush()
+
+    agendamento = Agendamento(
+        cliente_id=cliente.id,
+        horario_id=horario.id,
+        status=status,
+    )
+    session.add(agendamento)
+    session.flush()
+    return agendamento
 
 
 def test_listar_agendamentos_service_retorna_pagina_e_total(
@@ -397,3 +434,188 @@ def test_listar_agendamentos_service_formata_data_e_horario_corretamente(
     item = pagina.items[0]
     assert item.data == "10/08/2026"
     assert item.horario == "08:30–09:30"
+
+
+def test_listar_agendamentos_service_filtra_por_cliente_parcial(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    criar_agendamento_mock(session, medico_id, cliente_nome="Ana Paula Ribeiro")
+    criar_agendamento_mock(session, medico_id, cliente_nome="Bruno Henrique Lima")
+
+    pagina = listar_agendamentos_service(session, page=1, size=5, cliente="ana")
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].cliente == "Ana Paula Ribeiro"
+
+
+def test_listar_agendamentos_service_filtra_por_medico_exato(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, _ = banco_postgres
+    limpar_agendamentos(session)
+    medico_a, _ = criar_medico_com_especialidade(
+        session, nome_medico="Dra. Mariana Alves"
+    )
+    medico_b, _ = criar_medico_com_especialidade(
+        session, nome_medico="Dr. Rafael Monteiro"
+    )
+
+    criar_agendamento_para_medico(session, medico_a, cliente_nome="Cliente A")
+    criar_agendamento_para_medico(session, medico_b, cliente_nome="Cliente B")
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, medico="Dr. Rafael Monteiro"
+    )
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].medico == "Dr. Rafael Monteiro"
+    assert pagina.items[0].cliente == "Cliente B"
+
+
+def test_listar_agendamentos_service_filtra_por_especialidade(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, _ = banco_postgres
+    limpar_agendamentos(session)
+    medico_a, _ = criar_medico_com_especialidade(
+        session, nome_especialidade="Cardiologia"
+    )
+    medico_b, _ = criar_medico_com_especialidade(
+        session, nome_especialidade="Dermatologia"
+    )
+
+    criar_agendamento_para_medico(session, medico_a, cliente_nome="Cliente A")
+    criar_agendamento_para_medico(session, medico_b, cliente_nome="Cliente B")
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, especialidade="Dermatologia"
+    )
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].especialidade == "Dermatologia"
+
+
+def test_listar_agendamentos_service_filtra_por_status(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    criar_agendamento_mock(session, medico_id, cliente_nome="Cliente A")
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Cliente B",
+        status=StatusAgendamento.CANCELADO,
+    )
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, status="CANCELADO"
+    )
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].status is StatusAgendamento.CANCELADO
+
+
+def test_listar_agendamentos_service_filtra_por_data(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Cliente A",
+        data=datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+    )
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Cliente B",
+        data=datetime(2026, 8, 11, 8, 0, tzinfo=UTC),
+    )
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, data=date(2026, 8, 10)
+    )
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].cliente == "Cliente A"
+    assert pagina.items[0].data == "10/08/2026"
+
+
+def test_listar_agendamentos_service_filtros_combinados(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, _ = banco_postgres
+    limpar_agendamentos(session)
+    medico_a, _ = criar_medico_com_especialidade(
+        session, nome_medico="Dra. Mariana Alves", nome_especialidade="Cardiologia"
+    )
+    medico_b, _ = criar_medico_com_especialidade(
+        session, nome_medico="Dr. Rafael Monteiro", nome_especialidade="Dermatologia"
+    )
+
+    criar_agendamento_para_medico(
+        session,
+        medico_a,
+        cliente_nome="Ana Paula Ribeiro",
+        data=datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+    )
+    criar_agendamento_para_medico(
+        session,
+        medico_a,
+        cliente_nome="Bruno Henrique Lima",
+        data=datetime(2026, 8, 10, 9, 0, tzinfo=UTC),
+    )
+    criar_agendamento_para_medico(
+        session,
+        medico_b,
+        cliente_nome="Ana Paula Ribeiro",
+        data=datetime(2026, 8, 10, 10, 0, tzinfo=UTC),
+    )
+
+    pagina = listar_agendamentos_service(
+        session,
+        page=1,
+        size=5,
+        cliente="ana",
+        medico="Dra. Mariana Alves",
+        especialidade="Cardiologia",
+        status="AGENDADO",
+        data=date(2026, 8, 10),
+    )
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].cliente == "Ana Paula Ribeiro"
+
+
+def test_listar_agendamentos_service_status_desconhecido_retorna_vazio(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    criar_agendamento_mock(session, medico_id, cliente_nome="Cliente A")
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, status="CONCLUIDO"
+    )
+
+    assert pagina.total == 0
+    assert pagina.items == []
+    assert pagina.totalPages == 1
