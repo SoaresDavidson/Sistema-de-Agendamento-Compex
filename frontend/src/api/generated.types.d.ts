@@ -2,6 +2,22 @@ export namespace Schemas {
 	// <Schemas>
 	export type AgendamentoCreate = { cliente_id: string; horario_id: string };
 	export type StatusAgendamento = "AGENDADO" | "CANCELADO";
+	export type AgendamentoListagemResponse = {
+		id: string;
+		cliente: string;
+		medico: string;
+		especialidade: string;
+		data: string;
+		horario: string;
+		status: StatusAgendamento;
+	};
+	export type AgendamentoPage = {
+		items: Array<AgendamentoListagemResponse>;
+		page: number;
+		size: number;
+		total: number;
+		totalPages: number;
+	};
 	export type AgendamentoResponse = {
 		cliente_id: string;
 		horario_id: string;
@@ -117,6 +133,19 @@ export namespace Schemas {
 export namespace Endpoints {
 	// <Endpoints>
 
+	export type get_Listar_api_agendamentos_get = {
+		method: "GET";
+		path: "/api/agendamentos";
+		requestFormat: "json";
+		responseFormat: "json";
+		parameters: {
+			query?: Partial<{ page: number; size: number }>;
+		};
+		responses: {
+			200: Schemas.AgendamentoPage;
+			422: Schemas.HTTPValidationError;
+		};
+	};
 	export type post_Criar_api_agendamentos_post = {
 		method: "POST";
 		path: "/api/agendamentos";
@@ -326,6 +355,15 @@ export namespace Endpoints {
 
 // <EndpointByMethod>
 export type EndpointByMethod = {
+	get: {
+		"/api/agendamentos": Endpoints.get_Listar_api_agendamentos_get;
+		"/api/clientes": Endpoints.get_Listar_clientes_api_clientes_get;
+		"/api/especialidades": Endpoints.get_Listar_especialidades_api_especialidades_get;
+		"/api/horarios/disponiveis": Endpoints.get_Listar_horarios_disponiveis_api_horarios_disponiveis_get;
+		"/api/medicos": Endpoints.get_Listar_medicos_api_medicos_get;
+		"/": Endpoints.get_Read_root__get;
+		"/api/health": Endpoints.get_Health_check_api_health_get;
+	};
 	post: {
 		"/api/agendamentos": Endpoints.post_Criar_api_agendamentos_post;
 		"/api/clientes": Endpoints.post_Criar_cliente_api_clientes_post;
@@ -339,14 +377,6 @@ export type EndpointByMethod = {
 		"/api/clientes/{cliente_id}": Endpoints.patch_Atualizar_cliente_api_clientes__cliente_id__patch;
 		"/api/horarios/{horario_id}/desativar": Endpoints.patch_Desativar_api_horarios__horario_id__desativar_patch;
 	};
-	get: {
-		"/api/clientes": Endpoints.get_Listar_clientes_api_clientes_get;
-		"/api/especialidades": Endpoints.get_Listar_especialidades_api_especialidades_get;
-		"/api/horarios/disponiveis": Endpoints.get_Listar_horarios_disponiveis_api_horarios_disponiveis_get;
-		"/api/medicos": Endpoints.get_Listar_medicos_api_medicos_get;
-		"/": Endpoints.get_Read_root__get;
-		"/api/health": Endpoints.get_Health_check_api_health_get;
-	};
 	delete: {
 		"/api/clientes/{cliente_id}": Endpoints.delete_Excluir_cliente_api_clientes__cliente_id__delete;
 	};
@@ -355,8 +385,8 @@ export type EndpointByMethod = {
 // </EndpointByMethod>
 
 // <EndpointByMethod.Shorthands>
+export type GetEndpoints = EndpointByMethod["get"];
 export type PostEndpoints = EndpointByMethod["post"];
 export type PatchEndpoints = EndpointByMethod["patch"];
-export type GetEndpoints = EndpointByMethod["get"];
 export type DeleteEndpoints = EndpointByMethod["delete"];
 // </EndpointByMethod.Shorthands>

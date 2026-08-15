@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.agendamento import Agendamento
 from app.schemas.agendamento import (
     AgendamentoCreate,
+    AgendamentoPage,
     AgendamentoResponse,
     CancelamentoRequest,
     CancelamentoResponse,
@@ -20,6 +21,7 @@ from app.services.agendamento import (
     HorarioIndisponivelError,
     HorarioNaoEncontradoParaAgendamentoError,
     aplicar_cancelamento,
+    listar_agendamentos_service,
     realizar_agendamento,
     validar_cancelamento,
 )
@@ -27,6 +29,15 @@ from app.services.agendamento import (
 router = APIRouter(prefix="/agendamentos", tags=["agendamentos"])
 
 SessionDep = Annotated[Session, Depends(get_db)]
+
+
+@router.get("", response_model=AgendamentoPage)
+def listar(
+    session: SessionDep,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 5,
+) -> AgendamentoPage:
+    return listar_agendamentos_service(session, page, size)
 
 
 @router.post(

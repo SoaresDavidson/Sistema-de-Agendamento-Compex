@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models.agendamento import StatusAgendamento
+from app.models.agendamento import Agendamento, StatusAgendamento
 from app.models.cliente import Client
 from app.models.horario import Horario
 from app.repositories.agendamento import (
@@ -100,3 +100,132 @@ def test_permite_novo_agendamento_quando_anterior_esta_cancelado_no_postgres(
 
     assert anterior.status is StatusAgendamento.CANCELADO
     assert novo.status is StatusAgendamento.AGENDADO
+
+
+def test_listagem_paginada_ordenada_por_data_horario_crescente(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    session.query(Agendamento).delete()
+    session.flush()
+
+    # Cria 7 agendamentos em ordem aleatória
+    datas = [
+        datetime(2026, 8, 11, 14, 0, tzinfo=UTC),
+        datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+        datetime(2026, 8, 10, 14, 0, tzinfo=UTC),
+        datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+        datetime(2026, 8, 11, 8, 0, tzinfo=UTC),
+        datetime(2026, 8, 12, 8, 0, tzinfo=UTC),
+        datetime(2026, 8, 9, 16, 0, tzinfo=UTC),
+    ]
+
+    for i, data in enumerate(datas):
+        cliente = Client(
+            nome=f"Cliente {i+1}",
+            telefone="85999999999",
+            email=f"cliente{i}@example.com",
+            data_nascimento=date(1990, 1, 1),
+        )
+        horario = Horario(
+            medico_id=medico_id,
+            inicio=data,
+            fim=data + timedelta(hours=1),
+        )
+        session.add_all([cliente, horario])
+        session.flush()
+
+        agendamento = Agendamento(
+            cliente_id=cliente.id,
+            horario_id=horario.id,
+            status=StatusAgendamento.AGENDADO,
+        )
+        session.add(agendamento)
+        session.flush()
+
+    # Testa paginação: página 1 (5 itens)
+    stmt = (
+        session.query(Agendamento)
+        .join(Horario, Agendamento.horario_id == Horario.id)
+        .order_by(Horario.inicio.asc())
+        .limit(5)
+    )
+    pagina1 = session.scalars(stmt).all()
+
+    assert len(pagina1) == 5
+    # Verifica ordenação crescente por inicio
+    inicios = [a.horario.inicio for a in pagina1]
+    assert inicios == sorted(inicios)
+
+    # Testa total de itens
+    total = session.query(Agendamento).count()
+    assert total == 7
+
+
+def test_listagem_paginada_segunda_pagina(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    session.query(Agendamento).delete()
+    session.flush()
+
+    for i in range(7):
+        cliente = Client(
+            nome=f"Cliente {i+1}",
+            telefone="85999999999",
+            email=f"cliente{i}@example.com",
+            data_nascimento=date(1990, 1, 1),
+        )
+        inicio = datetime(2026, 8, 10 + i // 3, 8 + (i % 3) * 3, 0, tzinfo=UTC)
+        horario = Horario(
+            medico_id=medico_id,
+            inicio=inicio,
+            fim=inicio + timedelta(hours=1),
+        )
+        session.add_all([cliente, horario])
+        session.flush()
+
+        agendamento = Agendamento(
+            cliente_id=cliente.id,
+            horario_id=horario.id,
+            status=StatusAgendamento.AGENDADO,
+        )
+        session.add(agendamento)
+        session.flush()
+
+    # Página 2 com size=5
+    stmt = (
+        session.query(Agendamento)
+        .join(Horario, Agendamento.horario_id == Horario.id)
+        .order_by(Horario.inicio.asc())
+        .offset(5)
+        .limit(5)
+    )
+    pagina2 = session.scalars(stmt).all()
+
+    assert len(pagina2) == 2
+    # Verifica que continua ordenado
+    inicios = [a.horario.inicio for a in pagina2]
+    assert inicios == sorted(inicios)
+
+
+def test_listagem_vazia_retorna_sem_erro(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, _ = banco_postgres
+    session.query(Agendamento).delete()
+    session.flush()
+
+    # Não cria nenhum agendamento, apenas consulta
+    stmt = (
+        session.query(Agendamento)
+        .join(Horario, Agendamento.horario_id == Horario.id)
+        .order_by(Horario.inicio.asc())
+        .limit(5)
+    )
+    resultados = session.scalars(stmt).all()
+
+    assert resultados == []
+
+    total = session.query(Agendamento).count()
+    assert total == 0
