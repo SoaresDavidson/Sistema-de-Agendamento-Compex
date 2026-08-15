@@ -12,7 +12,7 @@ export function DashboardLayout() {
 				<DashboardHeader />
 
 				<ToastProvider>
-					<main className="p-8 font-sans">
+					<main className="outlet">
 						<Outlet />
 					</main>
 				</ToastProvider>
