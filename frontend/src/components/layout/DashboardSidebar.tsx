@@ -1,5 +1,6 @@
 import { AgendamentosNavLink } from "@/features/agendamentos/components/AgendamentosNavLink";
 import { ClienteNavLink } from "@/features/clientes/components/ClienteNavLink";
+import { HorariosNavLink } from "@/features/horarios/components/HorariosNavLink";
 
 export function DashboardSidebar() {
 	return (
@@ -13,6 +14,7 @@ export function DashboardSidebar() {
 			<nav className="mt-4 grid gap-1">
 				<AgendamentosNavLink />
 				<ClienteNavLink />
+				<HorariosNavLink />
 			</nav>
 			<footer className="sidebar-footer mt-auto border-t border-border px-2 pt-4 text-xs text-muted-foreground">
 				<p>Agendamento clínico</p>

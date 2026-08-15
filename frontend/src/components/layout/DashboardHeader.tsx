@@ -16,6 +16,8 @@ function getCurrentDate(date = new Date()) {
 
 const routeTitles: Record<string, string> = {
 	"/agendamentos": "Agendamentos",
+	"/horarios": "Horários",
+	"/horarios/novo": "Cadastrar horários",
 	"/clientes": "Clientes",
 };
 
