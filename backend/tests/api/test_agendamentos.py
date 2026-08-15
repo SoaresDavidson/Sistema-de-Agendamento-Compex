@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import Iterator
+from datetime import date
 from unittest.mock import MagicMock
 
 import pytest
@@ -67,7 +68,16 @@ def test_lista_agendamentos_retorna_pagina_correta(
     assert dados["totalPages"] == 1
     assert len(dados["items"]) == 1
     assert dados["items"][0]["cliente"] == "Ana Paula Ribeiro"
-    listar.assert_called_once_with(session, 1, 5)
+    listar.assert_called_once_with(
+        session,
+        1,
+        5,
+        cliente=None,
+        medico=None,
+        especialidade=None,
+        status=None,
+        data=None,
+    )
     session.commit.assert_not_called()
 
 
@@ -83,7 +93,16 @@ def test_lista_agendamentos_repassa_page_e_size(
     resposta = client.get("/api/agendamentos?page=2&size=10")
 
     assert resposta.status_code == 200
-    listar.assert_called_once_with(session, 2, 10)
+    listar.assert_called_once_with(
+        session,
+        2,
+        10,
+        cliente=None,
+        medico=None,
+        especialidade=None,
+        status=None,
+        data=None,
+    )
 
 
 def test_lista_agendamentos_default_size_5(
@@ -98,7 +117,16 @@ def test_lista_agendamentos_default_size_5(
     resposta = client.get("/api/agendamentos")
 
     assert resposta.status_code == 200
-    listar.assert_called_once_with(session, 1, 5)
+    listar.assert_called_once_with(
+        session,
+        1,
+        5,
+        cliente=None,
+        medico=None,
+        especialidade=None,
+        status=None,
+        data=None,
+    )
 
 
 @pytest.mark.parametrize("page", [0, -1])
@@ -111,6 +139,42 @@ def test_rejeita_page_invalido(client: TestClient, page: int) -> None:
 @pytest.mark.parametrize("size", [0, -1, 101])
 def test_rejeita_size_invalido(client: TestClient, size: int) -> None:
     resposta = client.get(f"/api/agendamentos?size={size}")
+
+    assert resposta.status_code == 422
+
+
+def test_lista_agendamentos_repassa_filtros_ao_service(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pagina = pagina_mock()
+    listar = MagicMock(return_value=pagina)
+    monkeypatch.setattr(api_agendamentos, "listar_agendamentos_service", listar)
+
+    resposta = client.get(
+        "/api/agendamentos?cliente=ana&medico=Mariana&especialidade=Cardiologia&status=AGENDADO&data=2026-08-10"
+    )
+
+    assert resposta.status_code == 200
+    listar.assert_called_once_with(
+        session,
+        1,
+        5,
+        cliente="ana",
+        medico="Mariana",
+        especialidade="Cardiologia",
+        status="AGENDADO",
+        data=date(2026, 8, 10),
+    )
+
+
+@pytest.mark.parametrize(
+    "data",
+    ["10/08/2026", "2026-08", "10-08-2026", "banana"],
+)
+def test_rejeita_data_invalida(client: TestClient, data: str) -> None:
+    resposta = client.get(f"/api/agendamentos?data={data}")
 
     assert resposta.status_code == 422
 

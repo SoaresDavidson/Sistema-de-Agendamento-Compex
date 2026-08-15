@@ -11,6 +11,7 @@ from app.models.horario import Horario
 from app.repositories.agendamento import (
     buscar_agendamento_por_id,
     criar_agendamento,
+    listar_agendamentos,
 )
 from app.repositories.horario import buscar_horario_para_agendamento
 from app.schemas.agendamento import AgendamentoCreate
@@ -229,3 +230,97 @@ def test_listagem_vazia_retorna_sem_erro(
 
     total = session.query(Agendamento).count()
     assert total == 0
+
+
+def test_listar_agendamentos_repository_filtra_por_cliente_e_data_com_count(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    session.query(Agendamento).delete()
+    session.flush()
+
+    for i, data in enumerate(
+        [
+            datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+            datetime(2026, 8, 10, 9, 0, tzinfo=UTC),
+            datetime(2026, 8, 11, 8, 0, tzinfo=UTC),
+        ]
+    ):
+        cliente = Client(
+            nome="Cliente Filtro" if i == 0 else f"Cliente {i+1}",
+            telefone="85999999999",
+            email=f"filtro{i}@example.com",
+            data_nascimento=date(1990, 1, 1),
+        )
+        horario = Horario(
+            medico_id=medico_id,
+            inicio=data,
+            fim=data + timedelta(hours=1),
+        )
+        session.add_all([cliente, horario])
+        session.flush()
+
+        agendamento = Agendamento(
+            cliente_id=cliente.id,
+            horario_id=horario.id,
+            status=StatusAgendamento.AGENDADO,
+        )
+        session.add(agendamento)
+        session.flush()
+
+    agendamentos, total = listar_agendamentos(
+        session,
+        page=1,
+        size=5,
+        cliente="filtro",
+        data=date(2026, 8, 10),
+    )
+
+    assert total == 1
+    assert len(agendamentos) == 1
+    assert agendamentos[0].cliente.nome == "Cliente Filtro"
+
+
+def test_listar_agendamentos_repository_filtra_por_status_com_count(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    session.query(Agendamento).delete()
+    session.flush()
+
+    for i, status in enumerate(
+        [StatusAgendamento.AGENDADO, StatusAgendamento.CANCELADO]
+    ):
+        cliente = Client(
+            nome=f"Cliente {i+1}",
+            telefone="85999999999",
+            email=f"status{i}@example.com",
+            data_nascimento=date(1990, 1, 1),
+        )
+        inicio = datetime(2026, 8, 10, 8 + i, 0, tzinfo=UTC)
+        horario = Horario(
+            medico_id=medico_id,
+            inicio=inicio,
+            fim=inicio + timedelta(hours=1),
+        )
+        session.add_all([cliente, horario])
+        session.flush()
+
+        agendamento = Agendamento(
+            cliente_id=cliente.id,
+            horario_id=horario.id,
+            status=status,
+        )
+        session.add(agendamento)
+        session.flush()
+
+    agendamentos, total = listar_agendamentos(
+        session,
+        page=1,
+        size=5,
+        status=StatusAgendamento.CANCELADO,
+    )
+
+    assert total == 1
+    assert len(agendamentos) == 1
+    assert agendamentos[0].status is StatusAgendamento.CANCELADO
