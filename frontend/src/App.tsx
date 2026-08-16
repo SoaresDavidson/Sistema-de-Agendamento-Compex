@@ -7,6 +7,7 @@ import { ClientesPage } from "./features/clientes/pages/ClientesPage";
 import { EspecialidadesPage } from "./features/especialidades/pages/EspecialidadePage";
 import { HorarioFormPage } from "./features/horarios/pages/HorarioFormPage";
 import { HorariosPage } from "./features/horarios/pages/HorariosPage";
+import { MedicosPage } from "./features/medicos/pages/MedicosPage";
 
 export default function App() {
 	return (
@@ -19,6 +20,7 @@ export default function App() {
 					<Route path="horarios" element={<HorariosPage />} />
 					<Route path="horarios/novo" element={<HorarioFormPage />} />
 					<Route path="especialidades" element={<EspecialidadesPage />} />
+					<Route path="medicos" element={<MedicosPage />} />
 					<Route path="clientes" element={<ClientesPage />} />
 					<Route path="clientes/cadastro" element={<ClientCadastro />} />
 					<Route path="clientes/:id/editar" element={<ClientCadastro />} />
