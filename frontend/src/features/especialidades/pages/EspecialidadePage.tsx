@@ -1,7 +1,6 @@
 import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, buttonVariants } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import {
 	Empty,
 	EmptyContent,
@@ -11,6 +10,7 @@ import {
 	EmptyTitle,
 } from "@/components/ui/Empty";
 import { ErrorState } from "@/components/ui/Error";
+import { EspecialidadeModal } from "../components/EspecialidadeModal";
 import { EspecialidadeSkeleton } from "../components/EspecialidadeSkeleton";
 import { EspecialidadesHeader } from "../components/EspecialidadesHeader";
 import { EspecialidadeTable } from "../components/EspecialidadesTable";
@@ -21,11 +21,10 @@ export function EspecialidadesPage() {
 		especialidades,
 		isLoading,
 		error,
-		nextCursor,
 		fetchEspecialidades,
-		loadMore,
 	} = useListEspecialidade();
-	const navigate = useNavigate();
+	const [especialidadeId, setEspecialidadeId] = useState("");
+	const [modalAberto, setModalAberto] = useState(false);
 	const [hasLoaded, setHasLoaded] = useState(false);
 	useEffect(() => {
 		let isActive = true;
@@ -40,7 +39,17 @@ export function EspecialidadesPage() {
 	}, [fetchEspecialidades]);
 	return (
 		<section>
-			<EspecialidadesHeader />
+			{modalAberto && (
+				<EspecialidadeModal
+					especialidadeId={especialidadeId}
+					onClose={() => {
+						setModalAberto(false);
+						setEspecialidadeId("");
+					}}
+				/>
+			)}
+
+			<EspecialidadesHeader onClick={setModalAberto}/>
 			{!hasLoaded || isLoading ? (
 				<EspecialidadeSkeleton />
 			) : error ? (
@@ -62,7 +71,10 @@ export function EspecialidadesPage() {
 					<EmptyContent>
 						<Button
 							variant="primary"
-							onClick={() => {}} // modal de cadastro
+							onClick={() => {
+								setEspecialidadeId("");
+								setModalAberto(true);
+							}}
 						>
 							Cadastrar Especialiade
 						</Button>
@@ -71,11 +83,10 @@ export function EspecialidadesPage() {
 			) : (
 				<EspecialidadeTable
 					especialidades={especialidades}
-					onEditar={(especialidade) =>
-						navigate(`"especialidades/${especialidade.id}/editar"`, {
-							state: { especialidade },
-						})
-					}
+					onEditar={(especialidade) => {
+						setModalAberto(true);
+						setEspecialidadeId(especialidade.id);
+					}}
 				/>
 			)}
 		</section>

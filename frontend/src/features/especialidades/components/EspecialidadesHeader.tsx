@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/Button";
 
-export function EspecialidadesHeader() {
+interface EspecialiadeHeaderProps{
+	onClick: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+export function EspecialidadesHeader({ onClick }: EspecialiadeHeaderProps) {
 	return (
 		<header className="page-head">
 			<div>
@@ -9,7 +13,7 @@ export function EspecialidadesHeader() {
 			</div>
 			<Button
 				variant="primary"
-				onClick={() => {}} //modal de cadastro
+				onClick={() => {onClick(true)}} //modal de cadastro
 			>
 				Cadastrar Especialidade
 			</Button>

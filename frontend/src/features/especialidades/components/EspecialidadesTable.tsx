@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button";
 import {
 	Table,
 	TableWrap,
@@ -45,7 +46,19 @@ export function EspecialidadeTable({
 							<TD>
 								<span className="secondary-cell">placeholder uso</span>
 							</TD>
-							{onEditar && <TD></TD>}
+							{onEditar && (
+								<TD>
+									<div className="table-actions">
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => onEditar(especialidade)}
+										>
+											Editar
+										</Button>
+									</div>
+								</TD>
+							)}
 						</TR>
 					))}
 				</TBody>
