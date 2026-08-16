@@ -169,6 +169,30 @@ def test_lista_agendamentos_repassa_filtros_ao_service(
     )
 
 
+def test_lista_agendamentos_repassa_status_concluido(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pagina = pagina_mock()
+    listar = MagicMock(return_value=pagina)
+    monkeypatch.setattr(api_agendamentos, "listar_agendamentos_service", listar)
+
+    resposta = client.get("/api/agendamentos?status=CONCLUIDO")
+
+    assert resposta.status_code == 200
+    listar.assert_called_once_with(
+        session,
+        1,
+        5,
+        cliente=None,
+        medico=None,
+        especialidade=None,
+        status="CONCLUIDO",
+        data=None,
+    )
+
+
 @pytest.mark.parametrize(
     "data",
     ["10/08/2026", "2026-08", "10-08-2026", "banana"],
