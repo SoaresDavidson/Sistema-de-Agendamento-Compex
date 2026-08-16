@@ -11,7 +11,10 @@ from app.api.routers import especialidades as api_especialidades
 from app.database import get_db
 from app.models.especialidade import Especialidade
 from app.schemas.especialidade import EspecialidadePage
-from app.services.especialidade import EspecialidadeDuplicada
+from app.services.especialidade import (
+    EspecialidadeDuplicada,
+    EspecialidadeNaoEncontrada,
+)
 from main import app
 
 
@@ -129,3 +132,98 @@ def test_lista_especialidades_com_cursor_e_limite(
         "next_cursor": str(proximo_cursor),
     }
     listar.assert_called_once_with(session, cursor, 10)
+
+
+def test_atualiza_especialidade_normalizada_e_commita(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    especialidade = criar_especialidade()
+    atualizar = MagicMock(return_value=especialidade)
+    monkeypatch.setattr(
+        api_especialidades,
+        "atualizar_especialidade_service",
+        atualizar,
+    )
+
+    resposta = client.patch(
+        f"/api/especialidades/{especialidade.id}",
+        json={"nome": "  Cardiologia   Pediátrica  "},
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json() == {"id": str(especialidade.id), "nome": "Cardiologia"}
+    assert atualizar.call_args.args[0:2] == (session, especialidade.id)
+    assert atualizar.call_args.args[2].nome == "Cardiologia Pediátrica"
+    session.commit.assert_called_once_with()
+    session.rollback.assert_not_called()
+
+
+@pytest.mark.parametrize("payload", [{}, {"nome": ""}, {"nome": "   "}])
+def test_patch_rejeita_nome_invalido_sem_chamar_service(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+    payload: dict[str, str],
+) -> None:
+    atualizar = MagicMock()
+    monkeypatch.setattr(
+        api_especialidades,
+        "atualizar_especialidade_service",
+        atualizar,
+    )
+
+    resposta = client.patch(f"/api/especialidades/{uuid.uuid4()}", json=payload)
+
+    assert resposta.status_code == 422
+    atualizar.assert_not_called()
+    session.commit.assert_not_called()
+    session.rollback.assert_not_called()
+
+
+def test_patch_id_inexistente_retorna_404_e_reverte_transacao(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    especialidade_id = uuid.uuid4()
+    monkeypatch.setattr(
+        api_especialidades,
+        "atualizar_especialidade_service",
+        MagicMock(
+            side_effect=EspecialidadeNaoEncontrada("Especialidade não encontrada.")
+        ),
+    )
+
+    resposta = client.patch(
+        f"/api/especialidades/{especialidade_id}",
+        json={"nome": "Cardiologia"},
+    )
+
+    assert resposta.status_code == 404
+    assert resposta.json() == {"detail": {"mensagem": "Especialidade não encontrada."}}
+    session.rollback.assert_called_once_with()
+    session.commit.assert_not_called()
+
+
+def test_patch_duplicado_retorna_409_e_reverte_transacao(
+    client: TestClient,
+    session: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        api_especialidades,
+        "atualizar_especialidade_service",
+        MagicMock(side_effect=EspecialidadeDuplicada("Especialidade já cadastrada.")),
+    )
+
+    resposta = client.patch(
+        f"/api/especialidades/{uuid.uuid4()}",
+        json={"nome": "CARDIOLOGIA"},
+    )
+
+    assert resposta.status_code == 409
+    assert resposta.json() == {"detail": {"mensagem": "Especialidade já cadastrada."}}
+    session.rollback.assert_called_once_with()
+    session.commit.assert_not_called()

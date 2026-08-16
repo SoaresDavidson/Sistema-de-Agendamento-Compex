@@ -8,6 +8,7 @@ from app.schemas.especialidade import (
     EspecialidadeCreate,
     EspecialidadePage,
     EspecialidadeResponse,
+    EspecialidadeUpdate,
 )
 
 
@@ -44,3 +45,15 @@ def test_serializa_pagina_de_especialidades() -> None:
 
     assert pagina.items == [item]
     assert pagina.next_cursor == str(item.id)
+
+
+def test_update_normaliza_nome() -> None:
+    dados = EspecialidadeUpdate(nome="  Cirurgia   Geral  ")
+
+    assert dados.nome == "Cirurgia Geral"
+
+
+@pytest.mark.parametrize("payload", [{}, {"nome": ""}, {"nome": "   "}])
+def test_update_rejeita_nome_ausente_ou_vazio(payload: dict[str, str]) -> None:
+    with pytest.raises(ValidationError):
+        EspecialidadeUpdate.model_validate(payload)

@@ -26,6 +26,10 @@ class EspecialidadeCreate(EspecialidadeBase):
     pass
 
 
+class EspecialidadeUpdate(EspecialidadeBase):
+    pass
+
+
 class EspecialidadeResponse(EspecialidadeBase):
     model_config = ConfigDict(from_attributes=True)
 

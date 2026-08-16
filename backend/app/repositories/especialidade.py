@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.especialidade import Especialidade
-from app.schemas.especialidade import EspecialidadeCreate
+from app.schemas.especialidade import EspecialidadeCreate, EspecialidadeUpdate
 
 _DEFAULT_LIMIT = 20
 _MAX_LIMIT = 100
@@ -24,12 +24,32 @@ def criar_especialidade(
 def buscar_especialidade_por_nome_normalizado(
     session: Session,
     nome: str,
+    especialidade_id_excluido: uuid.UUID | None = None,
 ) -> Especialidade | None:
     nome_normalizado = func.lower(
         func.regexp_replace(func.btrim(Especialidade.nome), r"\s+", " ", "g")
     )
     statement = select(Especialidade).where(nome_normalizado == nome.lower())
-    return session.scalar(statement)
+    if especialidade_id_excluido is not None:
+        statement = statement.where(Especialidade.id != especialidade_id_excluido)
+    return session.scalar(statement.limit(1))
+
+
+def buscar_especialidade_por_id(
+    session: Session,
+    especialidade_id: uuid.UUID,
+) -> Especialidade | None:
+    return session.get(Especialidade, especialidade_id)
+
+
+def atualizar_especialidade(
+    session: Session,
+    especialidade: Especialidade,
+    payload: EspecialidadeUpdate,
+) -> Especialidade:
+    especialidade.nome = payload.nome
+    session.flush()
+    return especialidade
 
 
 def listar_especialidade(

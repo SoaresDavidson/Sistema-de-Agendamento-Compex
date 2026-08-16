@@ -5,8 +5,13 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.models.especialidade import Especialidade
-from app.repositories.especialidade import criar_especialidade, listar_especialidade
-from app.schemas.especialidade import EspecialidadeCreate
+from app.repositories.especialidade import (
+    atualizar_especialidade,
+    buscar_especialidade_por_id,
+    criar_especialidade,
+    listar_especialidade,
+)
+from app.schemas.especialidade import EspecialidadeCreate, EspecialidadeUpdate
 
 
 def criar_payload_valido() -> EspecialidadeCreate:
@@ -92,3 +97,27 @@ def test_listar_especialidades_limita_tamanho_da_pagina(
     statement = session.scalars.call_args.args[0]
     sql = str(statement.compile(compile_kwargs={"literal_binds": True}))
     assert f"LIMIT {limite_sql}" in sql
+
+
+def test_buscar_especialidade_por_id_usa_session_get() -> None:
+    session = MagicMock(spec=Session)
+    especialidade = criar_modelo_especialidade()
+    session.get.return_value = especialidade
+
+    resultado = buscar_especialidade_por_id(session, especialidade.id)
+
+    assert resultado is especialidade
+    session.get.assert_called_once_with(Especialidade, especialidade.id)
+
+
+def test_atualizar_especialidade_altera_nome_e_executa_flush() -> None:
+    session = MagicMock(spec=Session)
+    especialidade = criar_modelo_especialidade()
+    payload = EspecialidadeUpdate(nome="Clínica Médica")
+
+    resultado = atualizar_especialidade(session, especialidade, payload)
+
+    assert resultado is especialidade
+    assert especialidade.nome == "Clínica Médica"
+    session.flush.assert_called_once_with()
+    session.commit.assert_not_called()
