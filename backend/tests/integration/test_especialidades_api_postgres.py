@@ -121,3 +121,97 @@ def test_get_aplica_cursor_e_limite(
         item["id"]
         for item in client.get("/api/especialidades?limite=2").json()["items"]
     }
+
+
+def test_patch_normaliza_e_persiste_especialidade(
+    client_especialidades_postgres: tuple[TestClient, Session],
+) -> None:
+    client, session = client_especialidades_postgres
+    criada = client.post("/api/especialidades", json={"nome": "Cardiologia"})
+    especialidade_id = criada.json()["id"]
+
+    resposta = client.patch(
+        f"/api/especialidades/{especialidade_id}",
+        json={"nome": "  Cardiologia   Pediátrica  "},
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json() == {
+        "id": especialidade_id,
+        "nome": "Cardiologia Pediátrica",
+    }
+    assert session.get(Especialidade, uuid.UUID(especialidade_id)).nome == (
+        "Cardiologia Pediátrica"
+    )
+
+
+def test_patch_permite_nome_normalizado_do_proprio_registro(
+    client_especialidades_postgres: tuple[TestClient, Session],
+) -> None:
+    client, session = client_especialidades_postgres
+    criada = client.post("/api/especialidades", json={"nome": "Clínica Médica"})
+    especialidade_id = criada.json()["id"]
+
+    resposta = client.patch(
+        f"/api/especialidades/{especialidade_id}",
+        json={"nome": "  CLÍNICA   MÉDICA  "},
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json()["nome"] == "CLÍNICA MÉDICA"
+    assert session.scalar(select(func.count()).select_from(Especialidade)) == 1
+
+
+def test_patch_rejeita_nome_normalizado_de_outro_registro_sem_alterar_original(
+    client_especialidades_postgres: tuple[TestClient, Session],
+) -> None:
+    client, session = client_especialidades_postgres
+    cardiologia = client.post(
+        "/api/especialidades",
+        json={"nome": "Cardiologia"},
+    ).json()
+    client.post("/api/especialidades", json={"nome": "Clínica Médica"})
+
+    resposta = client.patch(
+        f"/api/especialidades/{cardiologia['id']}",
+        json={"nome": "  CLÍNICA   MÉDICA  "},
+    )
+
+    assert resposta.status_code == 409
+    assert resposta.json() == {"detail": {"mensagem": "Especialidade já cadastrada."}}
+    assert (
+        session.get(Especialidade, uuid.UUID(cardiologia["id"])).nome == "Cardiologia"
+    )
+    assert session.scalar(select(func.count()).select_from(Especialidade)) == 2
+
+
+def test_patch_id_inexistente_retorna_404_sem_criar_registro(
+    client_especialidades_postgres: tuple[TestClient, Session],
+) -> None:
+    client, session = client_especialidades_postgres
+
+    resposta = client.patch(
+        f"/api/especialidades/{uuid.uuid4()}",
+        json={"nome": "Cardiologia"},
+    )
+
+    assert resposta.status_code == 404
+    assert resposta.json() == {"detail": {"mensagem": "Especialidade não encontrada."}}
+    assert session.scalar(select(func.count()).select_from(Especialidade)) == 0
+
+
+@pytest.mark.parametrize("payload", [{}, {"nome": ""}, {"nome": "   "}])
+def test_patch_payload_invalido_retorna_422_sem_alterar_registro(
+    client_especialidades_postgres: tuple[TestClient, Session],
+    payload: dict[str, str],
+) -> None:
+    client, session = client_especialidades_postgres
+    criada = client.post("/api/especialidades", json={"nome": "Cardiologia"}).json()
+
+    resposta = client.patch(
+        f"/api/especialidades/{criada['id']}",
+        json=payload,
+    )
+
+    assert resposta.status_code == 422
+    assert session.get(Especialidade, uuid.UUID(criada["id"])).nome == "Cardiologia"

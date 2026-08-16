@@ -150,8 +150,7 @@ function validateBatch(form: BatchForm) {
 	if (
 		form.periodos.some(
 			(periodo) =>
-				!Number.isInteger(periodo.duracaoMinutos) ||
-				periodo.duracaoMinutos < 5,
+				!Number.isInteger(periodo.duracaoMinutos) || periodo.duracaoMinutos < 5,
 		)
 	) {
 		return "A duração deve ser um número inteiro de pelo menos 5 minutos em todos os períodos.";
@@ -682,7 +681,7 @@ export function HorarioFormPage() {
 																	const periodos = [...batch.periodos];
 																	periodos[index] = {
 																		...periodos[index],
-																		duracaoMinutos: isNaN(val) ? 0 : val,
+																		duracaoMinutos: Number.isNaN(val) ? 0 : val,
 																	};
 																	setBatch({ ...batch, periodos });
 																}}

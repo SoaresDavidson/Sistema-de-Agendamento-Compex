@@ -4,6 +4,7 @@ import { AgendamentosPage } from "./features/agendamentos/pages/AgendamentosPage
 import { NovoAgendamentoPage } from "./features/agendamentos/pages/NovoAgendamentoPage";
 import { ClientCadastro } from "./features/clientes/components/ClientCadastro";
 import { ClientesPage } from "./features/clientes/pages/ClientesPage";
+import { EspecialidadesPage } from "./features/especialidades/pages/EspecialidadePage";
 import { HorarioFormPage } from "./features/horarios/pages/HorarioFormPage";
 import { HorariosPage } from "./features/horarios/pages/HorariosPage";
 
@@ -17,6 +18,7 @@ export default function App() {
 					<Route path="agendamentos/novo" element={<NovoAgendamentoPage />} />
 					<Route path="horarios" element={<HorariosPage />} />
 					<Route path="horarios/novo" element={<HorarioFormPage />} />
+					<Route path="especialidades" element={<EspecialidadesPage />} />
 					<Route path="clientes" element={<ClientesPage />} />
 					<Route path="clientes/cadastro" element={<ClientCadastro />} />
 					<Route path="clientes/:id/editar" element={<ClientCadastro />} />

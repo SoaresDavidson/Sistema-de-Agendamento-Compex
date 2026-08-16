@@ -49,7 +49,9 @@ describe("HorarioFormPage", () => {
 	it("renders the individual form by default and loads doctors", async () => {
 		renderComponent();
 
-		expect(screen.getByRole("status")).toHaveTextContent("Carregando médicos...");
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Carregando médicos...",
+		);
 
 		await waitFor(() => {
 			expect(screen.getByLabelText(/Médico/i)).toBeInTheDocument();
@@ -71,7 +73,9 @@ describe("HorarioFormPage", () => {
 			expect(screen.getByLabelText(/Médico/i)).toBeInTheDocument();
 		});
 
-		const checkbox = screen.getByLabelText("Marcar vários horários de uma vez?");
+		const checkbox = screen.getByLabelText(
+			"Marcar vários horários de uma vez?",
+		);
 		await user.click(checkbox);
 
 		expect(checkbox).toBeChecked();
@@ -101,7 +105,9 @@ describe("HorarioFormPage", () => {
 		});
 
 		// Initially 1 period row, remove button is disabled
-		expect(screen.getByRole("button", { name: /Remover período 1/i })).toBeDisabled();
+		expect(
+			screen.getByRole("button", { name: /Remover período 1/i }),
+		).toBeDisabled();
 
 		// Add second period
 		await user.click(addPeriodBtn);
@@ -115,7 +121,9 @@ describe("HorarioFormPage", () => {
 
 		// Remove second period
 		await user.click(removeButtons[1]);
-		expect(screen.getAllByRole("button", { name: /Remover período/i })).toHaveLength(1);
+		expect(
+			screen.getAllByRole("button", { name: /Remover período/i }),
+		).toHaveLength(1);
 	});
 
 	it("validates and submits batch schedule with custom duration per period, then navigates to /horarios", async () => {
@@ -163,9 +171,7 @@ describe("HorarioFormPage", () => {
 		});
 
 		// Click Criar horários
-		await user.click(
-			screen.getByRole("button", { name: /Criar 8 horários/i }),
-		);
+		await user.click(screen.getByRole("button", { name: /Criar 8 horários/i }));
 
 		await waitFor(() => {
 			expect(schedulesApi.createSchedulesBatch).toHaveBeenCalledTimes(1);

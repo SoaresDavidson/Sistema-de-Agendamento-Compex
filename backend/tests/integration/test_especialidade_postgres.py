@@ -8,8 +8,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.especialidade import Especialidade
-from app.repositories.especialidade import criar_especialidade, listar_especialidade
-from app.schemas.especialidade import EspecialidadeCreate
+from app.repositories.especialidade import (
+    atualizar_especialidade,
+    buscar_especialidade_por_id,
+    buscar_especialidade_por_nome_normalizado,
+    criar_especialidade,
+    listar_especialidade,
+)
+from app.schemas.especialidade import EspecialidadeCreate, EspecialidadeUpdate
 
 pytestmark = pytest.mark.integration
 
@@ -93,3 +99,48 @@ def test_normalizacao_de_espacos_impede_duplicidade(
             session,
             EspecialidadeCreate(nome="Clínica Médica"),
         )
+
+
+def test_busca_por_id_e_nome_normalizado_exclui_proprio_registro(
+    banco_postgres_especialidades: Session,
+) -> None:
+    session = banco_postgres_especialidades
+    especialidade = criar_especialidade(
+        session,
+        EspecialidadeCreate(nome="Clínica Médica"),
+    )
+
+    por_id = buscar_especialidade_por_id(session, especialidade.id)
+    por_nome = buscar_especialidade_por_nome_normalizado(session, "CLÍNICA MÉDICA")
+    excluindo_proprio_id = buscar_especialidade_por_nome_normalizado(
+        session,
+        "clínica médica",
+        especialidade_id_excluido=especialidade.id,
+    )
+
+    assert por_id is especialidade
+    assert por_nome is especialidade
+    assert excluindo_proprio_id is None
+
+
+def test_atualiza_especialidade_e_executa_flush_no_postgres(
+    banco_postgres_especialidades: Session,
+) -> None:
+    session = banco_postgres_especialidades
+    especialidade = criar_especialidade(
+        session,
+        EspecialidadeCreate(nome="Cardiologia"),
+    )
+    especialidade_id = especialidade.id
+
+    resultado = atualizar_especialidade(
+        session,
+        especialidade,
+        EspecialidadeUpdate(nome="Cardiologia Pediátrica"),
+    )
+    session.expunge_all()
+
+    assert resultado.id == especialidade_id
+    assert buscar_especialidade_por_id(session, especialidade_id).nome == (
+        "Cardiologia Pediátrica"
+    )
