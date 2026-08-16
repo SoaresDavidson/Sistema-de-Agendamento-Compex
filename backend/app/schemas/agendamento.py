@@ -1,9 +1,22 @@
 import uuid
 from datetime import datetime
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 
 from app.models.agendamento import CancelamentoOrigem, StatusAgendamento
+
+
+class StatusAgendamentoExibicao(StrEnum):
+    """Status exibido na listagem, incluindo o derivado CONCLUIDO.
+
+    Diferente de `StatusAgendamento` (persistido), este enum inclui CONCLUIDO,
+    que é calculado em leitura quando o horário do agendamento já terminou.
+    """
+
+    AGENDADO = "AGENDADO"
+    CANCELADO = "CANCELADO"
+    CONCLUIDO = "CONCLUIDO"
 
 
 class AgendamentoBase(BaseModel):
@@ -32,7 +45,7 @@ class AgendamentoListagemResponse(BaseModel):
     especialidade: str
     data: str
     horario: str
-    status: StatusAgendamento
+    status: StatusAgendamentoExibicao
 
 
 class AgendamentoPage(BaseModel):

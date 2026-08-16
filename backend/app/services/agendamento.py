@@ -16,6 +16,7 @@ from app.schemas.agendamento import (
     AgendamentoCreate,
     AgendamentoListagemResponse,
     AgendamentoPage,
+    StatusAgendamentoExibicao,
 )
 from app.services.horario import horario_esta_disponivel
 
@@ -97,22 +98,23 @@ def listar_agendamentos_service(
     especialidade: str | None = None,
     status: str | None = None,
     data: date | None = None,
+    agora: datetime | None = None,
 ) -> AgendamentoPage:
-    status_enum = None
+    if agora is None:
+        agora = datetime.now(UTC)
+
+    status_exibicao: StatusAgendamentoExibicao | None = None
     if status is not None:
         try:
-            status_enum = StatusAgendamento(status)
+            status_exibicao = StatusAgendamentoExibicao(status)
         except ValueError:
-            status_enum = None
-
-    if status is not None and status_enum is None:
-        return AgendamentoPage(
-            items=[],
-            page=1,
-            size=size,
-            total=0,
-            totalPages=1,
-        )
+            return AgendamentoPage(
+                items=[],
+                page=1,
+                size=size,
+                total=0,
+                totalPages=1,
+            )
 
     agendamentos, total = listar_agendamentos(
         session,
@@ -121,8 +123,9 @@ def listar_agendamentos_service(
         cliente=cliente,
         medico=medico,
         especialidade=especialidade,
-        status=status_enum,
+        status=status_exibicao,
         data=data,
+        agora=agora,
     )
 
     total_pages = max(1, math.ceil(total / size))
@@ -131,6 +134,10 @@ def listar_agendamentos_service(
     items: list[AgendamentoListagemResponse] = []
     for a in agendamentos:
         especialidade = a.horario.medico.especialidades[0].nome if a.horario.medico.especialidades else ""
+        if a.status is StatusAgendamento.AGENDADO and a.horario.fim < agora:
+            status_exibido = StatusAgendamentoExibicao.CONCLUIDO
+        else:
+            status_exibido = StatusAgendamentoExibicao(a.status.value)
         items.append(
             AgendamentoListagemResponse(
                 id=a.id,
@@ -139,7 +146,7 @@ def listar_agendamentos_service(
                 especialidade=especialidade,
                 data=a.horario.inicio.strftime("%d/%m/%Y"),
                 horario=f"{a.horario.inicio.strftime('%H:%M')}–{a.horario.fim.strftime('%H:%M')}",
-                status=a.status,
+                status=status_exibido,
             )
         )
 

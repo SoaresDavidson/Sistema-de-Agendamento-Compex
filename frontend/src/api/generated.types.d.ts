@@ -1,7 +1,16 @@
 export namespace Schemas {
 	// <Schemas>
 	export type AgendamentoCreate = { cliente_id: string; horario_id: string };
-	export type StatusAgendamento = "AGENDADO" | "CANCELADO";
+	/**
+	 * Status exibido na listagem, incluindo o derivado CONCLUIDO.
+	 *
+	 * Diferente de `StatusAgendamento` (persistido), este enum inclui CONCLUIDO,
+	 * que é calculado em leitura quando o horário do agendamento já terminou.
+	 */
+	export type StatusAgendamentoExibicao =
+		| "AGENDADO"
+		| "CANCELADO"
+		| "CONCLUIDO";
 	export type AgendamentoListagemResponse = {
 		id: string;
 		cliente: string;
@@ -9,7 +18,7 @@ export namespace Schemas {
 		especialidade: string;
 		data: string;
 		horario: string;
-		status: StatusAgendamento;
+		status: StatusAgendamentoExibicao;
 	};
 	export type AgendamentoPage = {
 		items: Array<AgendamentoListagemResponse>;
@@ -18,6 +27,7 @@ export namespace Schemas {
 		total: number;
 		totalPages: number;
 	};
+	export type StatusAgendamento = "AGENDADO" | "CANCELADO";
 	export type AgendamentoResponse = {
 		cliente_id: string;
 		horario_id: string;

@@ -5,13 +5,14 @@ from datetime import UTC, date, datetime, time, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.agendamento import Agendamento, StatusAgendamento
+from app.models.agendamento import Agendamento
+from app.models.agendamento import StatusAgendamento as AgendamentoStatus
 from app.models.cliente import Client
 from app.models.especialidade import Especialidade
 from app.models.horario import Horario
 from app.models.medico import Medico
 from app.models.medico_especialidade import tabela_medico_especialidade
-from app.schemas.agendamento import AgendamentoCreate
+from app.schemas.agendamento import AgendamentoCreate, StatusAgendamentoExibicao
 
 
 def criar_agendamento(
@@ -20,7 +21,7 @@ def criar_agendamento(
 ) -> Agendamento:
     agendamento = Agendamento(
         **dados.model_dump(),
-        status=StatusAgendamento.AGENDADO,
+        status=AgendamentoStatus.AGENDADO,
     )
     session.add(agendamento)
     session.flush()
@@ -41,13 +42,19 @@ def listar_agendamentos(
     cliente: str | None = None,
     medico: str | None = None,
     especialidade: str | None = None,
-    status: StatusAgendamento | None = None,
+    status: StatusAgendamentoExibicao | None = None,
     data: date | None = None,
+    agora: datetime | None = None,
 ) -> tuple[Sequence[Agendamento], int]:
     """Retorna agendamentos paginados ordenados por data/horário crescente e o total.
 
     Suporta filtros por nome do cliente (parcial, sem diferenciar maiúsculas),
     nome exato do médico, nome exato da especialidade, status e dia do horário.
+
+    O status usa o enum de exibição: AGENDADO e CANCELADO são persistidos;
+    CONCLUIDO é derivado em leitura (agendamentos AGENDADO cujo horário já
+    terminou). `agora` é necessário para derivar AGENDADO/CONCLUIDO quando
+    `status` é informado.
     """
     offset = (page - 1) * size
 
@@ -70,7 +77,16 @@ def listar_agendamentos(
         )
         filtros.append(Especialidade.nome == especialidade)
     if status is not None:
-        filtros.append(Agendamento.status == status)
+        if status is StatusAgendamentoExibicao.CANCELADO:
+            filtros.append(Agendamento.status == AgendamentoStatus.CANCELADO)
+        elif status is StatusAgendamentoExibicao.CONCLUIDO:
+            filtros.append(Agendamento.status == AgendamentoStatus.AGENDADO)
+            if agora is not None:
+                filtros.append(Horario.fim < agora)
+        else:  # AGENDADO
+            filtros.append(Agendamento.status == AgendamentoStatus.AGENDADO)
+            if agora is not None:
+                filtros.append(Horario.fim >= agora)
     if data is not None:
         inicio_dia = datetime.combine(data, time.min, tzinfo=UTC)
         fim_dia = inicio_dia + timedelta(days=1)

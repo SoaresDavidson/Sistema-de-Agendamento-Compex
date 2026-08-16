@@ -10,8 +10,13 @@ export const AgendamentoCreate = z.object({
 	horario_id: z.uuid(),
 });
 
-export type StatusAgendamento = __TypedOpenapi.Schemas.StatusAgendamento;
-export const StatusAgendamento = z.enum(["AGENDADO", "CANCELADO"]);
+export type StatusAgendamentoExibicao =
+	__TypedOpenapi.Schemas.StatusAgendamentoExibicao;
+export const StatusAgendamentoExibicao = z.enum([
+	"AGENDADO",
+	"CANCELADO",
+	"CONCLUIDO",
+]);
 
 export type AgendamentoListagemResponse =
 	__TypedOpenapi.Schemas.AgendamentoListagemResponse;
@@ -22,7 +27,7 @@ export const AgendamentoListagemResponse = z.object({
 	especialidade: z.string(),
 	data: z.string(),
 	horario: z.string(),
-	status: StatusAgendamento,
+	status: StatusAgendamentoExibicao,
 });
 
 export type AgendamentoPage = __TypedOpenapi.Schemas.AgendamentoPage;
@@ -33,6 +38,9 @@ export const AgendamentoPage = z.object({
 	total: z.number().int(),
 	totalPages: z.number().int(),
 });
+
+export type StatusAgendamento = __TypedOpenapi.Schemas.StatusAgendamento;
+export const StatusAgendamento = z.enum(["AGENDADO", "CANCELADO"]);
 
 export type AgendamentoResponse = __TypedOpenapi.Schemas.AgendamentoResponse;
 export const AgendamentoResponse = z.object({
