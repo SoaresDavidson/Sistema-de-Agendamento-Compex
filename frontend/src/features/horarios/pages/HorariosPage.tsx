@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import {
 	Empty,
 	EmptyContent,
@@ -11,9 +12,14 @@ import {
 } from "@/components/ui/Empty";
 import { ErrorState } from "@/components/ui/Error";
 import { Skeleton } from "@/components/ui/Skeleton";
-import type { AvailableScheduleFilters } from "../api/availableSchedulesApi";
+import type {
+	AvailableScheduleFilters,
+	HorarioDisponivelResponse,
+} from "../api/availableSchedulesApi";
 import { AvailableSchedulesFilters } from "../components/AvailableSchedulesFilters";
 import { AvailableSchedulesTable } from "../components/AvailableSchedulesTable";
+import { DesativarHorarioModal } from "../components/DesativarHorarioModal";
+import { desativarHorario } from "../api/availableSchedulesApi";
 import { useAvailableSchedules } from "../hooks/useAvailableSchedules";
 
 const SKELETON_IDS = ["1", "2", "3", "4", "5"] as const;
@@ -27,7 +33,42 @@ export function HorariosPage() {
 	const { schedules, doctors, specialties, loading, error, refresh } =
 		useAvailableSchedules(filters);
 
+	const [alvoDesativar, setAlvoDesativar] = useState<
+		HorarioDisponivelResponse | null
+	>(null);
+	const [desativando, setDesativando] = useState(false);
+	const [erroDesativar, setErroDesativar] = useState<string | null>(null);
+	const { showToast } = useToast();
+
 	const handleClear = () => setFilters({});
+
+	const handleConfirmarDesativar = async () => {
+		if (alvoDesativar === null || desativando) return;
+		setDesativando(true);
+		setErroDesativar(null);
+		try {
+			await desativarHorario(alvoDesativar.id);
+			setAlvoDesativar(null);
+			showToast(
+				"Horário desativado",
+				"O horário não aparecerá mais como disponível para novos agendamentos.",
+			);
+			refresh();
+		} catch (err) {
+			setErroDesativar(
+				err instanceof Error
+					? err.message
+					: "Não foi possível desativar o horário.",
+			);
+		} finally {
+			setDesativando(false);
+		}
+	};
+
+	const handleAbrirDesativar = (s: HorarioDisponivelResponse) => {
+		setErroDesativar(null);
+		setAlvoDesativar(s);
+	};
 
 	return (
 		<section>
@@ -77,7 +118,11 @@ export function HorariosPage() {
 				)}
 
 				{!loading && !error && schedules.length > 0 && (
-					<AvailableSchedulesTable schedules={schedules} doctors={doctors} />
+					<AvailableSchedulesTable
+						schedules={schedules}
+						doctors={doctors}
+						onDesativar={handleAbrirDesativar}
+					/>
 				)}
 
 				{!loading && !error && schedules.length === 0 && (
@@ -107,6 +152,15 @@ export function HorariosPage() {
 					</Empty>
 				)}
 			</div>
+
+			<DesativarHorarioModal
+				open={alvoDesativar !== null}
+				horario={alvoDesativar}
+				onConfirm={handleConfirmarDesativar}
+				onClose={() => setAlvoDesativar(null)}
+				submitting={desativando}
+				error={erroDesativar ?? undefined}
+			/>
 		</section>
 	);
 }

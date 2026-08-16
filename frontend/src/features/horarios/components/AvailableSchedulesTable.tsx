@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/Button";
 import type {
 	HorarioDisponivelResponse,
 	MedicoResponse,
@@ -16,6 +17,7 @@ import {
 interface AvailableSchedulesTableProps {
 	schedules: HorarioDisponivelResponse[];
 	doctors: MedicoResponse[];
+	onDesativar?: (s: HorarioDisponivelResponse) => void;
 }
 
 function formatDate(value: string) {
@@ -65,6 +67,7 @@ function getAppointmentHref(
 export function AvailableSchedulesTable({
 	schedules,
 	doctors,
+	onDesativar,
 }: AvailableSchedulesTableProps) {
 	return (
 		<TableWrap>
@@ -95,12 +98,23 @@ export function AvailableSchedulesTable({
 								<span className="status status-disponivel">DISPONÍVEL</span>
 							</TD>
 							<TD>
-								<Link
-									className="btn btn-secondary btn-sm"
-									to={getAppointmentHref(schedule, doctors)}
-								>
-									Marcar horário
-								</Link>
+								<div className="table-actions">
+									<Link
+										className="btn btn-secondary btn-sm"
+										to={getAppointmentHref(schedule, doctors)}
+									>
+										Marcar horário
+									</Link>
+									{onDesativar && (
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => onDesativar(schedule)}
+										>
+											Desativar
+										</Button>
+									)}
+								</div>
 							</TD>
 						</TR>
 					))}
