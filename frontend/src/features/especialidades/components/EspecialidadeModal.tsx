@@ -7,14 +7,10 @@ export function EspecialidadeModal({
 	especialidadeId,
 	onClose,
 }: EspecialidadeModalProps) {
+
 	return (
 		<div className="modal-backdrop open">
-			<section
-				className="modal"
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="especialidade-modal-title"
-			>
+			<section className="modal">
 				<header className="modal-head">
 					<div>
 						<h2 id="especialidade-modal-title">
