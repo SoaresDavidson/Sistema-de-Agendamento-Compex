@@ -14,7 +14,7 @@ from app.repositories.agendamento import (
     listar_agendamentos,
 )
 from app.repositories.horario import buscar_horario_para_agendamento
-from app.schemas.agendamento import AgendamentoCreate
+from app.schemas.agendamento import AgendamentoCreate, StatusAgendamentoExibicao
 
 pytestmark = pytest.mark.integration
 
@@ -318,9 +318,67 @@ def test_listar_agendamentos_repository_filtra_por_status_com_count(
         session,
         page=1,
         size=5,
-        status=StatusAgendamento.CANCELADO,
+        status=StatusAgendamentoExibicao.CANCELADO,
     )
 
     assert total == 1
     assert len(agendamentos) == 1
     assert agendamentos[0].status is StatusAgendamento.CANCELADO
+
+
+def test_listar_agendamentos_repository_filtra_concluido_e_agendado_por_horario(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    session.query(Agendamento).delete()
+    session.flush()
+
+    agora = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    datas = [
+        datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+        datetime(2027, 8, 10, 8, 0, tzinfo=UTC),
+    ]
+    for i, inicio in enumerate(datas):
+        cliente = Client(
+            nome=f"Cliente {i+1}",
+            telefone="85999999999",
+            email=f"venc{i}@example.com",
+            data_nascimento=date(1990, 1, 1),
+        )
+        horario = Horario(
+            medico_id=medico_id,
+            inicio=inicio,
+            fim=inicio + timedelta(hours=1),
+        )
+        session.add_all([cliente, horario])
+        session.flush()
+
+        agendamento = Agendamento(
+            cliente_id=cliente.id,
+            horario_id=horario.id,
+            status=StatusAgendamento.AGENDADO,
+        )
+        session.add(agendamento)
+        session.flush()
+
+    concluidos, total_concluido = listar_agendamentos(
+        session,
+        page=1,
+        size=5,
+        status=StatusAgendamentoExibicao.CONCLUIDO,
+        agora=agora,
+    )
+    assert total_concluido == 1
+    assert len(concluidos) == 1
+    assert concluidos[0].horario.fim < agora
+
+    agendados, total_agendado = listar_agendamentos(
+        session,
+        page=1,
+        size=5,
+        status=StatusAgendamentoExibicao.AGENDADO,
+        agora=agora,
+    )
+    assert total_agendado == 1
+    assert len(agendados) == 1
+    assert agendados[0].horario.fim >= agora

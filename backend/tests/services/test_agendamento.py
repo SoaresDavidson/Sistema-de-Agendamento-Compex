@@ -9,6 +9,7 @@ from app.models.cliente import Client
 from app.models.especialidade import Especialidade
 from app.models.horario import Horario
 from app.models.medico import Medico
+from app.schemas.agendamento import StatusAgendamentoExibicao
 from app.services.agendamento import (
     aplicar_cancelamento,
     listar_agendamentos_service,
@@ -523,7 +524,7 @@ def test_listar_agendamentos_service_filtra_por_status(
 
     assert pagina.total == 1
     assert len(pagina.items) == 1
-    assert pagina.items[0].status is StatusAgendamento.CANCELADO
+    assert pagina.items[0].status is StatusAgendamentoExibicao.CANCELADO
 
 
 def test_listar_agendamentos_service_filtra_por_data(
@@ -572,19 +573,19 @@ def test_listar_agendamentos_service_filtros_combinados(
         session,
         medico_a,
         cliente_nome="Ana Paula Ribeiro",
-        data=datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+        data=datetime(2027, 8, 10, 8, 0, tzinfo=UTC),
     )
     criar_agendamento_para_medico(
         session,
         medico_a,
         cliente_nome="Bruno Henrique Lima",
-        data=datetime(2026, 8, 10, 9, 0, tzinfo=UTC),
+        data=datetime(2027, 8, 10, 9, 0, tzinfo=UTC),
     )
     criar_agendamento_para_medico(
         session,
         medico_b,
         cliente_nome="Ana Paula Ribeiro",
-        data=datetime(2026, 8, 10, 10, 0, tzinfo=UTC),
+        data=datetime(2027, 8, 10, 10, 0, tzinfo=UTC),
     )
 
     pagina = listar_agendamentos_service(
@@ -595,7 +596,7 @@ def test_listar_agendamentos_service_filtros_combinados(
         medico="Dra. Mariana Alves",
         especialidade="Cardiologia",
         status="AGENDADO",
-        data=date(2026, 8, 10),
+        data=date(2027, 8, 10),
     )
 
     assert pagina.total == 1
@@ -603,7 +604,7 @@ def test_listar_agendamentos_service_filtros_combinados(
     assert pagina.items[0].cliente == "Ana Paula Ribeiro"
 
 
-def test_listar_agendamentos_service_status_desconhecido_retorna_vazio(
+def test_listar_agendamentos_service_status_invalido_retorna_vazio(
     banco_postgres: tuple[Session, uuid.UUID],
 ) -> None:
     session, medico_id = banco_postgres
@@ -613,9 +614,125 @@ def test_listar_agendamentos_service_status_desconhecido_retorna_vazio(
     criar_agendamento_mock(session, medico_id, cliente_nome="Cliente A")
 
     pagina = listar_agendamentos_service(
-        session, page=1, size=5, status="CONCLUIDO"
+        session, page=1, size=5, status="INVALIDO"
     )
 
     assert pagina.total == 0
     assert pagina.items == []
     assert pagina.totalPages == 1
+
+
+def test_listar_agendamentos_service_deriva_concluido_para_horario_passado(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    agora = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Vencido",
+        data=datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+    )
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Futuro",
+        data=datetime(2027, 8, 10, 8, 0, tzinfo=UTC),
+    )
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, agora=agora
+    )
+
+    status_por_cliente = {item.cliente: item.status for item in pagina.items}
+    assert status_por_cliente["Vencido"] is StatusAgendamentoExibicao.CONCLUIDO
+    assert status_por_cliente["Futuro"] is StatusAgendamentoExibicao.AGENDADO
+
+
+def test_listar_agendamentos_service_cancelado_vencido_nao_vira_concluido(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    agora = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Cancelado Vencido",
+        data=datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+        status=StatusAgendamento.CANCELADO,
+    )
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, agora=agora
+    )
+
+    assert len(pagina.items) == 1
+    assert pagina.items[0].status is StatusAgendamentoExibicao.CANCELADO
+
+
+def test_listar_agendamentos_service_filtra_por_concluido(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    agora = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Vencido",
+        data=datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+    )
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Futuro",
+        data=datetime(2027, 8, 10, 8, 0, tzinfo=UTC),
+    )
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, status="CONCLUIDO", agora=agora
+    )
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].cliente == "Vencido"
+    assert pagina.items[0].status is StatusAgendamentoExibicao.CONCLUIDO
+
+
+def test_listar_agendamentos_service_filtra_agendado_exclui_vencidos(
+    banco_postgres: tuple[Session, uuid.UUID],
+) -> None:
+    session, medico_id = banco_postgres
+    limpar_agendamentos(session)
+    _, _ = criar_medico_com_especialidade(session)
+
+    agora = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Vencido",
+        data=datetime(2026, 8, 10, 8, 0, tzinfo=UTC),
+    )
+    criar_agendamento_mock(
+        session,
+        medico_id,
+        cliente_nome="Futuro",
+        data=datetime(2027, 8, 10, 8, 0, tzinfo=UTC),
+    )
+
+    pagina = listar_agendamentos_service(
+        session, page=1, size=5, status="AGENDADO", agora=agora
+    )
+
+    assert pagina.total == 1
+    assert len(pagina.items) == 1
+    assert pagina.items[0].cliente == "Futuro"
+    assert pagina.items[0].status is StatusAgendamentoExibicao.AGENDADO
