@@ -16,6 +16,18 @@ frontend/   interface web e testes
 prototype/  protótipo e documentação funcional
 ```
 
+## Funcionalidades implementadas
+
+- Cadastro e listagem de clientes (com validação de duplicidade por nome e data de nascimento)
+- Cadastro de médicos e especialidades
+- Cadastro de horários disponíveis individuais e em lote (com divisão em blocos de atendimento)
+- Agendamento de consultas com validação e impedimento de conflito de horários
+- Cancelamento de agendamento por solicitação do cliente (libera o horário) ou por indisponibilidade médica (desativa o horário)
+- Listagem paginada dos próximos agendamentos com filtros por médico, especialidade, cliente, status e data
+
+## Principais dificuldades encontradas
+[...]
+
 ## Executar
 
 ### Backend
