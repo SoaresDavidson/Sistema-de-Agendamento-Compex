@@ -27,6 +27,7 @@ prototype/  protótipo e documentação funcional
 
 ## Principais dificuldades encontradas
 - Dependência entre tarefas: algumas issues dependiam da conclusão de outras, o que exigiu coordenação da equipe e, em alguns momentos, bloqueou temporariamente o avanço de determinadas funcionalidades.
+- Prazo: o prazo estabelecido precisou de uma boa coordenação e organização por parte de todos os membros da equipe para atender a todos os requisitos no tempo estimado
 
 ## Executar
 
