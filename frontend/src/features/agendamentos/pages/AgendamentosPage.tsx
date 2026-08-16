@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import {
@@ -13,10 +13,6 @@ import { ErrorState } from "@/components/ui/Error";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { cancelarAgendamento } from "../api/appointmentsApi";
-import {
-	extractFilterOptions,
-	MOCK_APPOINTMENTS,
-} from "../api/mockAppointments";
 import type {
 	Appointment,
 	AppointmentFilters,
@@ -29,6 +25,7 @@ import { AppointmentsTable } from "../components/AppointmentsTable";
 import { CancelamentoModal } from "../components/CancelamentoModal";
 import { useAppointments } from "../hooks/useAppointments";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useFilterOptions } from "../hooks/useFilterOptions";
 
 const SKELETON_IDS = ["1", "2", "3", "4", "5"] as const;
 const DEBOUNCE_MS = 300;
@@ -66,17 +63,13 @@ export function AgendamentosPage() {
 		1,
 		filters,
 	);
+	const { medicos, especialidades } = useFilterOptions();
 	const [alvoCancelamento, setAlvoCancelamento] = useState<Appointment | null>(
 		null,
 	);
 	const [cancelando, setCancelando] = useState(false);
 	const [erroCancelamento, setErroCancelamento] = useState<string | null>(null);
 	const { showToast } = useToast();
-
-	const { medicos, especialidades } = useMemo(
-		() => extractFilterOptions(MOCK_APPOINTMENTS),
-		[],
-	);
 
 	const handleFiltersChange = (next: AppointmentFilters) => {
 		setFilters((prev) => ({
