@@ -26,7 +26,7 @@ prototype/  protótipo e documentação funcional
 - Listagem paginada dos próximos agendamentos com filtros por médico, especialidade, cliente, status e data
 
 ## Principais dificuldades encontradas
-[...]
+- Dependência entre tarefas: algumas issues dependiam da conclusão de outras, o que exigiu coordenação da equipe e, em alguns momentos, bloqueou temporariamente o avanço de determinadas funcionalidades.
 
 ## Executar
 
