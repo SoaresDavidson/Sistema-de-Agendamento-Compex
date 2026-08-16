@@ -95,6 +95,11 @@ const { mockListAppointments, mockCancelarAgendamento } = vi.hoisted(() => ({
 	mockCancelarAgendamento: vi.fn(),
 }));
 
+const { mockListMedicos, mockListEspecialidades } = vi.hoisted(() => ({
+	mockListMedicos: vi.fn(),
+	mockListEspecialidades: vi.fn(),
+}));
+
 vi.mock("../../api/appointmentsApi", async (importOriginal) => {
 	const mod =
 		await importOriginal<typeof import("../../api/appointmentsApi")>();
@@ -104,6 +109,13 @@ vi.mock("../../api/appointmentsApi", async (importOriginal) => {
 		cancelarAgendamento: mockCancelarAgendamento,
 	};
 });
+
+vi.mock("@/features/medicos/services/medicos.service", () => ({
+	medicosService: {
+		list: mockListMedicos,
+		listEspecialidades: mockListEspecialidades,
+	},
+}));
 
 function buildResponse(page: number): PaginatedResponse<Appointment> {
 	return {
@@ -115,8 +127,33 @@ function buildResponse(page: number): PaginatedResponse<Appointment> {
 	};
 }
 
+function mockFilterOptions() {
+	mockListMedicos.mockReset();
+	mockListMedicos.mockResolvedValue({
+		items: [
+			{
+				nome: "Dr. Rafael Monteiro",
+				id: "3cf086da-49a6-558e-ac68-0897b0ca1408",
+				especialidades: [],
+			},
+			{
+				nome: "Dra. Mariana Alves",
+				id: "b6e4f0c4-8342-52c1-9f3a-5a4b6c7d8e9f",
+				especialidades: [],
+			},
+		],
+		next_cursor: null,
+	});
+	mockListEspecialidades.mockReset();
+	mockListEspecialidades.mockResolvedValue([
+		{ nome: "Cardiologia", id: "b6e4f0c4-8342-52c1-9f3a-5a4b6c7d8e9a" },
+		{ nome: "Dermatologia", id: "b1f4738d-61c0-5b5b-8a8e-613752ba043f" },
+	]);
+}
+
 describe("AgendamentosPage — integração de paginação", () => {
 	beforeEach(() => {
+		mockFilterOptions();
 		mockListAppointments.mockReset();
 		mockListAppointments.mockImplementation(async ({ page }) =>
 			Promise.resolve(buildResponse(page)),
@@ -179,6 +216,7 @@ describe("AgendamentosPage — integração de paginação", () => {
 
 describe("AgendamentosPage — filtros da listagem", () => {
 	beforeEach(() => {
+		mockFilterOptions();
 		mockListAppointments.mockReset();
 		mockListAppointments.mockImplementation(async ({ page }) =>
 			Promise.resolve(buildResponse(page)),
@@ -197,6 +235,69 @@ describe("AgendamentosPage — filtros da listagem", () => {
 		expect(screen.getByLabelText("Especialidade")).toBeInTheDocument();
 		expect(screen.getByLabelText("Status")).toBeInTheDocument();
 		expect(screen.getByLabelText("Data")).toBeInTheDocument();
+	});
+
+	it("popula os selects de Médico e Especialidade com as opções do backend", async () => {
+		renderPage();
+		await screen.findByText("Cliente 1");
+
+		const medicoOptions = within(screen.getByLabelText("Médico")).getAllByRole(
+			"option",
+		);
+		expect(medicoOptions.map((o) => o.textContent)).toEqual([
+			"Todos",
+			"Dr. Rafael Monteiro",
+			"Dra. Mariana Alves",
+		]);
+
+		const especialidadeOptions = within(
+			screen.getByLabelText("Especialidade"),
+		).getAllByRole("option");
+		expect(especialidadeOptions.map((o) => o.textContent)).toEqual([
+			"Todas",
+			"Cardiologia",
+			"Dermatologia",
+		]);
+	});
+
+	it("alterar o select de Médico dispara chamada com filtro e volta para página 1", async () => {
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByText("Cliente 1");
+		mockListAppointments.mockClear();
+
+		await user.selectOptions(
+			screen.getByLabelText("Médico"),
+			"Dr. Rafael Monteiro",
+		);
+
+		await vi.waitFor(() => {
+			expect(mockListAppointments).toHaveBeenCalledWith({
+				page: 1,
+				size: 5,
+				filters: { medico: "Dr. Rafael Monteiro" },
+			});
+		});
+	});
+
+	it("alterar o select de Especialidade dispara chamada com filtro e volta para página 1", async () => {
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByText("Cliente 1");
+		mockListAppointments.mockClear();
+
+		await user.selectOptions(
+			screen.getByLabelText("Especialidade"),
+			"Cardiologia",
+		);
+
+		await vi.waitFor(() => {
+			expect(mockListAppointments).toHaveBeenCalledWith({
+				page: 1,
+				size: 5,
+				filters: { especialidade: "Cardiologia" },
+			});
+		});
 	});
 
 	it("alterar o select de Status dispara chamada com filtro e volta para página 1", async () => {
@@ -297,6 +398,7 @@ describe("AgendamentosPage — filtros da listagem", () => {
 
 describe("AgendamentosPage — estado de carregamento", () => {
 	beforeEach(() => {
+		mockFilterOptions();
 		mockListAppointments.mockReset();
 	});
 
@@ -403,6 +505,7 @@ describe("AgendamentosPage — estado vazio", () => {
 	};
 
 	beforeEach(() => {
+		mockFilterOptions();
 		mockListAppointments.mockReset();
 	});
 
@@ -470,6 +573,7 @@ describe("AgendamentosPage — estado vazio", () => {
 
 describe("AgendamentosPage — cancelamento (FE3)", () => {
 	beforeEach(() => {
+		mockFilterOptions();
 		mockListAppointments.mockReset();
 		mockListAppointments.mockImplementation(async ({ page }) =>
 			Promise.resolve(buildResponse(page)),
