@@ -42,6 +42,7 @@ export function EspecialidadesPage() {
 			{modalAberto && (
 				<EspecialidadeModal
 					especialidadeId={especialidadeId}
+					onSaved={fetchEspecialidades}
 					onClose={() => {
 						setModalAberto(false);
 						setEspecialidadeId("");
