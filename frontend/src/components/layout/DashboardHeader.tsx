@@ -19,6 +19,7 @@ const routeTitles: Record<string, string> = {
 	"/horarios": "Horários",
 	"/horarios/novo": "Cadastrar horários",
 	"/clientes": "Clientes",
+	"/especialidades": "Especialidades",
 };
 
 export function DashboardHeader() {
