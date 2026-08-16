@@ -81,7 +81,7 @@ describe("Dashboard/Agendamentos — contrato do protótipo", () => {
 		expect(content).not.toHaveClass("max-w-5xl", "px-8");
 	});
 
-	it("mantém cabeçalho semântico sem expor ação para rota inexistente", async () => {
+	it("mantém cabeçalho semântico com ação para novo agendamento", async () => {
 		renderRoute();
 		await screen.findByText("Ana Ribeiro");
 
@@ -96,17 +96,11 @@ describe("Dashboard/Agendamentos — contrato do protótipo", () => {
 			),
 		).toBeInTheDocument();
 
-		expect(
-			screen.queryByRole("button", {
-				name: "Novo agendamento",
-			}),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole("link", {
-				name: "Novo agendamento",
-			}),
-		).not.toBeInTheDocument();
-		expect(screen.queryByText("Novo agendamento")).not.toBeInTheDocument();
+		const novoAgendamentoLink = screen.getByRole("link", {
+			name: "Novo agendamento",
+		});
+		expect(novoAgendamentoLink).toBeInTheDocument();
+		expect(novoAgendamentoLink).toHaveAttribute("href", "/agendamentos/novo");
 	});
 
 	it("mantém sidebar fixa na grade sem infraestrutura de drawer", async () => {

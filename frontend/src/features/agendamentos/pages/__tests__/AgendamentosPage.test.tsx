@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/Toast";
 import type { Appointment, PaginatedResponse } from "../../api/types";
@@ -8,7 +9,9 @@ import { AgendamentosPage } from "../AgendamentosPage";
 function renderPage() {
 	return render(
 		<ToastProvider>
-			<AgendamentosPage />
+			<MemoryRouter>
+				<AgendamentosPage />
+			</MemoryRouter>
 		</ToastProvider>,
 	);
 }

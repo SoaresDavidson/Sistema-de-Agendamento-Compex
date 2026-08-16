@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import {
 	Empty,
@@ -131,6 +132,11 @@ export function AgendamentosPage() {
 						Consulte atendimentos futuros e históricos. O estado concluído é
 						calculado pelo fim do horário.
 					</p>
+				</div>
+				<div className="page-actions">
+					<Link className="btn btn-primary" to="/agendamentos/novo">
+						Novo agendamento
+					</Link>
 				</div>
 			</header>
 
