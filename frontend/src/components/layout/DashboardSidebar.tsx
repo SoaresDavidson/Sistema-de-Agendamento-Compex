@@ -2,6 +2,7 @@ import { AgendamentosNavLink } from "@/features/agendamentos/components/Agendame
 import { ClienteNavLink } from "@/features/clientes/components/ClienteNavLink";
 import { EspecialidadeNavLink } from "@/features/especialidades/components/EspecialidadeNavLink";
 import { HorariosNavLink } from "@/features/horarios/components/HorariosNavLink";
+import { MedicosNavLink } from "@/features/medicos/components/MedicosNavLink";
 
 export function DashboardSidebar() {
 	return (
@@ -15,6 +16,7 @@ export function DashboardSidebar() {
 			<nav className="mt-4 grid gap-1">
 				<AgendamentosNavLink />
 				<ClienteNavLink />
+				<MedicosNavLink />
 				<EspecialidadeNavLink />
 				<HorariosNavLink />
 			</nav>
