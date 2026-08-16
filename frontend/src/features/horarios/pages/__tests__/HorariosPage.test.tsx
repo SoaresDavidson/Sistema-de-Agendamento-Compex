@@ -1,14 +1,25 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/ui/Toast";
 import type { HorarioDisponivelResponse } from "@/api/generated";
 import * as schedulesHook from "../../hooks/useAvailableSchedules";
+import * as schedulesApi from "../../api/availableSchedulesApi";
 import { HorariosPage } from "../HorariosPage";
 
 vi.mock("../../hooks/useAvailableSchedules", () => ({
 	useAvailableSchedules: vi.fn(),
 }));
+
+vi.mock("../../api/availableSchedulesApi", async (importOriginal) => {
+	const mod =
+		await importOriginal<typeof import("../../api/availableSchedulesApi")>();
+	return {
+		...mod,
+		desativarHorario: vi.fn(),
+	};
+});
 
 const schedule: HorarioDisponivelResponse = {
 	id: "22222222-2222-4222-8222-222222222222",
@@ -22,12 +33,14 @@ const schedule: HorarioDisponivelResponse = {
 
 function renderPage() {
 	return render(
-		<MemoryRouter initialEntries={["/horarios"]}>
-			<Routes>
-				<Route path="/horarios" element={<HorariosPage />} />
-				<Route path="/horarios/novo" element={<p>Cadastro de horários</p>} />
-			</Routes>
-		</MemoryRouter>,
+		<ToastProvider>
+			<MemoryRouter initialEntries={["/horarios"]}>
+				<Routes>
+					<Route path="/horarios" element={<HorariosPage />} />
+					<Route path="/horarios/novo" element={<p>Cadastro de horários</p>} />
+				</Routes>
+			</MemoryRouter>
+		</ToastProvider>,
 	);
 }
 
@@ -63,10 +76,21 @@ function mockState(
 	};
 }
 
+const { mockDesativarHorario } = vi.hoisted(() => ({
+	mockDesativarHorario: vi.fn(),
+}));
+
 describe("HorariosPage", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(schedulesHook.useAvailableSchedules).mockReturnValue(mockState());
+		vi.mocked(schedulesApi.desativarHorario).mockImplementation(
+			mockDesativarHorario,
+		);
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	it("exibe filtros, resultado retornado e acesso ao cadastro", () => {
@@ -157,5 +181,98 @@ describe("HorariosPage", () => {
 		expect(screen.getByText("Falha de comunicação")).toBeInTheDocument();
 		await user.click(screen.getByRole("button", { name: /Tentar novamente/ }));
 		expect(refresh).toHaveBeenCalledTimes(1);
+	});
+
+	describe("desativação de horário", () => {
+		beforeEach(() => {
+			vi.mocked(schedulesHook.useAvailableSchedules).mockReturnValue(
+				mockState({ schedules: [schedule] }),
+			);
+			mockDesativarHorario.mockReset();
+		});
+
+		it("fluxo: abre modal, confirma → fecha modal, toast, lista atualizada", async () => {
+			const user = userEvent.setup();
+			mockDesativarHorario.mockResolvedValue({
+				id: schedule.id,
+				medico_id: schedule.medico.id,
+				inicio: schedule.inicio,
+				fim: schedule.fim,
+				ativo: false,
+			});
+
+			renderPage();
+			await screen.findByRole("button", { name: "Desativar" });
+
+			const btnDesativar = screen.getByRole("button", { name: "Desativar" });
+			await user.click(btnDesativar);
+
+			await user.click(
+				screen.getByRole("button", { name: "Desativar horário" }),
+			);
+
+			await screen.findByText("Horário desativado");
+			expect(mockDesativarHorario).toHaveBeenCalledWith(schedule.id);
+		});
+
+		it("erro mantém modal aberto e exibe mensagem", async () => {
+			const user = userEvent.setup();
+			mockDesativarHorario.mockRejectedValue(new Error("Erro de rede"));
+
+			renderPage();
+			await screen.findByRole("button", { name: "Desativar" });
+
+			const btnDesativar = screen.getByRole("button", { name: "Desativar" });
+			await user.click(btnDesativar);
+
+			await user.click(
+				screen.getByRole("button", { name: "Desativar horário" }),
+			);
+
+			await screen.findByText("Erro de rede");
+			expect(mockDesativarHorario).toHaveBeenCalledTimes(1);
+		});
+
+		it("múltiplos cliques em Desativar horário não disparam múltiplas submissões", async () => {
+			const user = userEvent.setup();
+			mockDesativarHorario.mockResolvedValue({
+				id: schedule.id,
+				medico_id: schedule.medico.id,
+				inicio: schedule.inicio,
+				fim: schedule.fim,
+				ativo: false,
+			});
+
+			renderPage();
+			await screen.findByRole("button", { name: "Desativar" });
+
+			const btnDesativar = screen.getByRole("button", { name: "Desativar" });
+			await user.click(btnDesativar);
+
+			const confirmar = screen.getByRole("button", {
+				name: "Desativar horário",
+			});
+			await user.click(confirmar);
+			await user.click(confirmar);
+			await user.click(confirmar);
+
+			await screen.findByText("Horário desativado");
+			expect(mockDesativarHorario).toHaveBeenCalledTimes(1);
+		});
+
+		it("cancelar via Manter ativo não chama API", async () => {
+			const user = userEvent.setup();
+			renderPage();
+			await screen.findByRole("button", { name: "Desativar" });
+
+			const btnDesativar = screen.getByRole("button", { name: "Desativar" });
+			await user.click(btnDesativar);
+
+			await user.click(
+				screen.getByRole("button", { name: "Manter ativo" }),
+			);
+
+			expect(mockDesativarHorario).not.toHaveBeenCalled();
+		});
 	});
 });

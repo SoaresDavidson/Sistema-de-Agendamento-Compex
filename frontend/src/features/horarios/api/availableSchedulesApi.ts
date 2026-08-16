@@ -59,6 +59,11 @@ export async function createSchedulesBatch(payload: HorarioLoteCreate) {
 	return HorariosLoteResponse.parse(response);
 }
 
+export async function desativarHorario(horarioId: string) {
+	const response = await api.patch(`/horarios/${horarioId}/desativar`, {});
+	return HorarioResponse.parse(response);
+}
+
 export function getScheduleErrorMessage(
 	error: unknown,
 	fallback: string,
